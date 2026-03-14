@@ -3,10 +3,10 @@ import "./Services/Historico.css";
 export default function Historico({ registros, onExcluir }) {
   return (
     <section className="historico-section">
-      <h3>Registros de Hoje</h3>
+      <h3>Registos de Hoje</h3>
 
       {registros.length === 0 ? (
-        <p className="vazio">Nenhum registro encontrado.</p>
+        <p className="vazio">Nenhum registo encontrado.</p>
       ) : (
         <div className="lista-registros">
           {registros.map((item) => (

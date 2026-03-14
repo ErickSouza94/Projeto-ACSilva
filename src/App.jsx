@@ -76,7 +76,7 @@ function App() {
   };
 
   const handleExcluir = (id) => {
-    if (window.confirm("Tem certeza que deseja apagar este registro?")) {
+    if (window.confirm("Tem certeza que deseja apagar este registo?")) {
       const atualizado = registroService.excluir(id);
       setHistorico(atualizado);
     }
@@ -95,13 +95,13 @@ function App() {
           className={abaAtiva === "registro" ? "btn-nav active" : "btn-nav"}
           onClick={() => setAbaAtiva("registro")}
         >
-          Novo Registro
+          Novo Registo
         </button>
         <button
           className={abaAtiva === "resumo" ? "btn-nav active" : "btn-nav"}
           onClick={() => setAbaAtiva("resumo")}
         >
-          Registros por Obra
+          Registos por Obra
         </button>
       </nav>
 
@@ -187,7 +187,7 @@ function App() {
             </div>
 
             <button type="submit" className="btn-enviar">
-              Registrar no Sistema
+              Registar no Sistema
             </button>
           </form>
 
