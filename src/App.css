@@ -1,0 +1,102 @@
+/* App.css */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f4f7f6;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+.container {
+  background: white;
+  width: 100%;
+  max-width: 450px;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 30px;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 10px;
+}
+
+.header h1 {
+  color: #2c3e50;
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.header p {
+  color: #7f8c8d;
+  margin: 5px 0 0;
+}
+
+.campo {
+  margin-bottom: 20px;
+}
+
+.campo label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #34495e;
+}
+
+.campo select, .campo input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  box-sizing: border-box; /* Garante que o padding não quebre a largura */
+}
+
+.campo select:disabled {
+  background-color: #f9f9f9;
+  cursor: not-allowed;
+}
+
+.btn-enviar {
+  width: 100%;
+  padding: 15px;
+  background-color: #27ae60;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.btn-enviar:hover {
+  background-color: #219150;
+}
+
+.tempo-container {
+  display: flex;
+  gap: 15px; /* Espaço entre os dois campos */
+  width: 100%;
+}
+
+.tempo-container .campo {
+  flex: 1; /* Faz ambos dividirem o espaço igualmente */
+}
+
+.card-registro {
+  background-color: #ecf0f1;
+  
+}
+
+.card-info {
+  background-color: #ecf0f1;
+  padding: 20px;
+  border-radius: 8px;
+  margin-top: 20px;
+  width: 100%;
+}
+

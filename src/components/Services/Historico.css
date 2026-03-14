@@ -1,0 +1,145 @@
+/* Container principal do histórico */
+.historico-section {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 2px solid #e0e0e0;
+}
+
+.historico-section h3 {
+  color: #2c3e50;
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Lista que envolve os cartões */
+.lista-registros {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Cada cartão de registro individual */
+.card-registro {
+  background: #ffffff;
+  border-left: 5px solid #27ae60; /* Faixa verde lateral para indicar sucesso */
+  border-radius: 8px;
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease;
+}
+
+.card-registro:active {
+  transform: scale(0.98); /* Efeito de clique no telemóvel */
+}
+
+/* Informações da esquerda (Empresa, Obra, Nome) */
+.card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card-info strong {
+  font-size: 1rem;
+  color: #1a1a1a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.card-info span {
+  font-size: 0.9rem;
+  color: #555;
+  font-weight: 500;
+}
+
+.card-info small {
+  font-size: 0.75rem;
+  color: #888;
+  margin-top: 2px;
+}
+
+/* Lado direito com o destaque das horas */
+.card-horas {
+  text-align: right;
+  min-width: 80px;
+}
+
+.card-horas strong {
+  display: block;
+  font-size: 1.1rem;
+  color: #27ae60;
+  margin-left: 5px;
+}
+
+.card-horas span {
+  display: block;
+  font-size: 0.7rem;
+  color: #999;
+  font-family: monospace;
+}
+
+/* Estilo para quando não há registros */
+.vazio {
+  text-align: center;
+  padding: 40px 20px;
+  color: #999;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border: 1px dashed #ccc;
+  font-style: italic;
+}
+
+.card-acoes {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.btn-excluir {
+  background-color: #ffeded;
+  color: #e74c3c;
+  border: 1px solid #ffcfcf;
+  border-radius: 4px;
+    margin-left: 38px;
+    margin-top: 10px;
+  width: 32px;
+  height: 32px;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-excluir:hover {
+  background-color: #e74c3c;
+  color: white;
+}
+
+/* Ajuste no card-horas para não quebrar o layout */
+.card-horas {
+  text-align: right;
+}
+
+/* Ajuste para telas muito pequenas (Smartphones antigos) */
+@media (max-width: 360px) {
+  .card-registro {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .card-horas {
+    text-align: left;
+    margin-top: 10px;
+    border-top: 1px solid #eee;
+    width: 100%;
+    padding-top: 5px;
+  }
+}
