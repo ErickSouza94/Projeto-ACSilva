@@ -85,7 +85,7 @@ function App() {
   return (
     <div className="container">
       <header className="header">
-        <h1>AC Silva Metalomecânica</h1>
+        <img className="logo-img" src="logo_ac_silva.png" alt="Logo AC Silva" />
         <p>Folha de Obra Digital</p>
       </header>
 
