@@ -30,6 +30,11 @@ body {
   font-size: 1.5rem;
 }
 
+.logo-img {
+  width: 400px;
+  margin-bottom: 10px;
+}
+
 .header p {
   color: #7f8c8d;
   margin: 5px 0 0;
