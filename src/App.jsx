@@ -1,9 +1,11 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect } from "react";
 import "./App.css";
 import { empresasParceiras, obrasAtivas } from "./components/data";
 import { registroService } from "./components/Services/RegistoService";
 import Historico from "./components/Historico";
-import ResumoObras from "./components/ResumoObras"; // Importe o novo componente
+import ResumoObras from "./components/ResumoObras";
+import PainelAdmin from "./components/PainelAdmin";
 
 function App() {
   const getHoje = () => new Date().toISOString().split("T")[0];
@@ -17,25 +19,38 @@ function App() {
 
   const [obrasFiltradas, setObrasFiltradas] = useState([]);
   const [historico, setHistorico] = useState([]);
-
-  // ESTADO PARA NAVEGAÇÃO ENTRE PÁGINAS
   const [abaAtiva, setAbaAtiva] = useState("registro");
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHistorico(registroService.obterTodos());
   }, []);
 
   useEffect(() => {
     const filtradas = obrasAtivas.filter((o) => o.empresaId === empresaId);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setObrasFiltradas(filtradas);
     setObraId("");
   }, [empresaId]);
 
+  // --- NOVAS FUNÇÕES PARA O PAINEL ADMIN ---
+  const handleAdicionarEmpresa = (novaEmpresa) => {
+    const novoItem = { id: Date.now().toString(), ...novaEmpresa };
+    empresasParceiras.push(novoItem);
+    // Força a atualização da interface
+    setAbaAtiva("registro");
+    setTimeout(() => setAbaAtiva("admin"), 10);
+  };
+
+  const handleAdicionarObra = (novaObra) => {
+    const novoItem = { id: Date.now().toString(), ...novaObra };
+    obrasAtivas.push(novoItem);
+    // Força a atualização da interface
+    setAbaAtiva("registro");
+    setTimeout(() => setAbaAtiva("admin"), 10);
+  };
+  // ------------------------------------------
+
   const handleSubmit = (e) => {
     e.preventDefault();
-
     const empresaNome = empresasParceiras.find((e) => e.id === empresaId)?.nome;
     const obraNome = obrasAtivas.find((o) => o.id === obraId)?.nome;
 
@@ -82,6 +97,15 @@ function App() {
     }
   };
 
+  const acessarAdmin = () => {
+    const senha = prompt("Digite a senha de administrador:");
+    if (senha === "acsilvaadmin") {
+      setAbaAtiva("admin");
+    } else {
+      alert("Senha incorreta!");
+    }
+  };
+
   return (
     <div className="container">
       <header className="header">
@@ -89,7 +113,6 @@ function App() {
         <p>Folha de Obra Digital</p>
       </header>
 
-      {/* MENU DE NAVEGAÇÃO */}
       <nav className="menu-navegacao">
         <button
           className={abaAtiva === "registro" ? "btn-nav active" : "btn-nav"}
@@ -103,9 +126,15 @@ function App() {
         >
           Registos por Obra
         </button>
+        <button
+          className={abaAtiva === "admin" ? "btn-nav active" : "btn-nav"}
+          onClick={acessarAdmin}
+        >
+          Admin
+        </button>
       </nav>
 
-      {abaAtiva === "registro" ? (
+      {abaAtiva === "registro" && (
         <>
           <form className="form-horas" onSubmit={handleSubmit}>
             <div className="campo">
@@ -193,8 +222,17 @@ function App() {
 
           <Historico registros={historico} onExcluir={handleExcluir} />
         </>
-      ) : (
-        <ResumoObras registros={historico} />
+      )}
+
+      {abaAtiva === "resumo" && <ResumoObras registros={historico} />}
+
+      {abaAtiva === "admin" && (
+        <PainelAdmin
+          empresas={empresasParceiras}
+          obras={obrasAtivas}
+          onAdicionarEmpresa={handleAdicionarEmpresa}
+          onAdicionarObra={handleAdicionarObra}
+        />
       )}
     </div>
   );
