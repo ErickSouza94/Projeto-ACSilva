@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Empresa {
+  id    String @id @default(uuid())
+  nome  String @unique
+  obras Obra[]
+}
+
+model Obra {
+  id        String    @id @default(uuid())
+  nome      String
+  empresaId String
+  empresa   Empresa   @relation(fields: [empresaId], references: [id])
+  registos  Registo[]
+}
+
+model Registo {
+  id             String   @id @default(uuid())
+  colaborador    String
+  data           DateTime
+  horas          Decimal
+  tempoFormatado String
+  obraId         String
+  obra           Obra     @relation(fields: [obraId], references: [id])
+}
