@@ -1,7 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
-  output   = "../generated/prisma"
-
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
@@ -9,17 +8,28 @@ datasource db {
 }
 
 model Empresa {
-  id    String @id @default(uuid())
-  nome  String @unique
-  obras Obra[]
+  id           String        @id @default(uuid())
+  nome         String        @unique
+  responsaveis Responsavel[]
+  obras        Obra[]
+}
+
+model Responsavel {
+  id        Int     @id @default(autoincrement())
+  nome      String
+  empresaId String
+  empresa   Empresa @relation(fields: [empresaId], references: [id])
+  obras     Obra[]
 }
 
 model Obra {
-  id        String    @id @default(uuid())
-  nome      String
-  empresaId String
-  empresa   Empresa   @relation(fields: [empresaId], references: [id])
-  registos  Registo[]
+  id            String       @id @default(uuid())
+  nome          String
+  empresaId     String
+  empresa       Empresa      @relation(fields: [empresaId], references: [id])
+  responsavelId Int?
+  responsavel   Responsavel? @relation(fields: [responsavelId], references: [id])
+  registos      Registo[]
 }
 
 model Registo {
