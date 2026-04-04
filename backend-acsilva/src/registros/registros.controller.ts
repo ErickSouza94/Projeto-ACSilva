@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get, Post, Body, Delete, Param } from '@nestjs/common';
 import { RegistrosService } from './registros.service';
 import { CreateRegistroDto } from './dto/create-registro.dto';
 
@@ -9,6 +9,11 @@ export class RegistrosController {
   @Post()
   create(@Body() createRegistroDto: CreateRegistroDto) {
     return this.registrosService.create(createRegistroDto);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.registrosService.remove(id);
   }
 
   @Get()

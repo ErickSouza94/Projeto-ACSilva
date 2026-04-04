@@ -16,7 +16,7 @@ async function bootstrap() {
 
   app.enableCors({
     origin: 'http://localhost:5173',
-    methods: 'GET,POST,PUT,DELETE,PATCH', // Adicionei PATCH porque usamos no update
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
 

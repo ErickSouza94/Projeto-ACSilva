@@ -25,6 +25,7 @@ function App() {
   const [obrasFiltradas, setObrasFiltradas] = useState([]);
   const [abaAtiva, setAbaAtiva] = useState("registro");
 
+  // 1. Carrega dados iniciais
   useEffect(() => {
     const carregarDados = async () => {
       try {
@@ -41,6 +42,7 @@ function App() {
     carregarDados();
   }, []);
 
+  // 2. Filtra obras quando a empresa muda
   useEffect(() => {
     if (empresaId) {
       const empresaSel = empresas.find((e) => e.id === empresaId);
@@ -52,6 +54,7 @@ function App() {
     setResponsavelNome("");
   }, [empresaId, empresas]);
 
+  // 3. Define responsável quando a obra muda
   useEffect(() => {
     if (obraId) {
       const obraSelecionada = obrasFiltradas.find((o) => o.id === obraId);
@@ -86,11 +89,10 @@ function App() {
     }
   };
 
-  // --- ALTERAÇÃO PRINCIPAL AQUI ---
+  // --- SUBMISSÃO DO REGISTO ---
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Convertendo inputs para números para bater com o DTO/Prisma
     const h = parseInt(horasInput) || 0;
     const m = parseInt(minutosInput) || 0;
 
@@ -99,41 +101,56 @@ function App() {
       return;
     }
 
-    // Este objeto deve ter EXATAMENTE as propriedades do seu CreateRegistroDto
+    if (!obraId) {
+      alert("Por favor, selecione uma obra.");
+      return;
+    }
+
     const novoRegistro = {
       colaborador: nome,
-      data: new Date(dataTrabalho).toISOString(), // O NestJS/Prisma prefere ISO String para datas
-      horas: h,
+      data: new Date(dataTrabalho).toISOString(),
+      horas: h + m / 60, // Convertendo para decimal para facilitar cálculos no resumo
       tempoFormatado: `${h}h ${m}m`,
       obraId: obraId,
     };
 
     try {
       const res = await api.post("/registros", novoRegistro);
-
-      // Atualiza o histórico local com o novo registro vindo do banco
       setHistorico([res.data, ...historico]);
+      alert("Registo salvo com sucesso!");
 
-      alert("Registo salvo!");
-
-      // Limpa apenas os campos de tempo e obra, mantendo o colaborador e data se desejar
       setObraId("");
       setHorasInput("");
       setMinutosInput("");
       setResponsavelNome("");
     } catch (err) {
-      console.error("Erro detalhado do Backend:", err.response?.data);
-      alert("Erro ao salvar registro. Verifique os campos.");
+      const msgErro = err.response?.data?.message || "Erro desconhecido";
+      console.error("Erro detalhado:", msgErro);
+      alert(
+        `Erro ao salvar: ${Array.isArray(msgErro) ? msgErro.join(", ") : msgErro}`,
+      );
     }
   };
 
+  // --- EXCLUSÃO DE REGISTO (ATUALIZADO) ---
   const handleExcluir = async (id) => {
-    if (window.confirm("Apagar este registo?")) {
+    if (!id) {
+      alert("Erro: ID do registo não identificado.");
+      return;
+    }
+
+    if (window.confirm("Apagar este registo permanentemente?")) {
       try {
+        console.log("Tentando excluir registo com ID:", id);
         await api.delete(`/registros/${id}`);
-        setHistorico(historico.filter((r) => r.id !== id));
+
+        // Remove do estado local apenas se o servidor confirmar a exclusão
+        setHistorico((prev) => prev.filter((r) => r.id !== id));
+        alert("Registo excluído com sucesso!");
       } catch (err) {
-        alert("Erro ao excluir.");
+        const erroServidor = err.response?.data?.message || err.message;
+        console.error("Erro ao excluir no Backend:", erroServidor);
+        alert(`Erro ao excluir: ${erroServidor}`);
       }
     }
   };
@@ -170,7 +187,7 @@ function App() {
         <>
           <form className="form-horas" onSubmit={handleSubmit}>
             <div className="campo">
-              <label>Data:</label>
+              <label>Data de Trabalho:</label>
               <input
                 type="date"
                 value={dataTrabalho}
@@ -186,7 +203,7 @@ function App() {
                 onChange={(e) => setEmpresaId(e.target.value)}
                 required
               >
-                <option value="">Selecione...</option>
+                <option value="">Selecione a empresa...</option>
                 {empresas.map((emp) => (
                   <option key={emp.id} value={emp.id}>
                     {emp.nome}
@@ -203,7 +220,7 @@ function App() {
                 disabled={!empresaId}
                 required
               >
-                <option value="">Selecione...</option>
+                <option value="">Selecione a obra...</option>
                 {obrasFiltradas.map((obra) => (
                   <option key={obra.id} value={obra.id}>
                     {obra.nome}
@@ -237,7 +254,7 @@ function App() {
                 type="text"
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
-                placeholder="Seu nome"
+                placeholder="Insira o seu nome"
                 required
               />
             </div>

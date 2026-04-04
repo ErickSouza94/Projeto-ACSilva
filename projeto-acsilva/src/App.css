@@ -1,4 +1,4 @@
-/* App.css */
+/* --- BASE & LAYOUT --- */
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background-color: #f4f7f6;
@@ -11,44 +11,73 @@ body {
 .container {
   background: white;
   width: 100%;
-  max-width: 450px;
+  max-width: 500px; /* Aumentado levemente para acomodar melhor os relatórios */
   padding: 30px;
   border-radius: 12px;
   box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
+/* --- HEADER & LOGO --- */
 .header {
   text-align: center;
   margin-bottom: 30px;
   border-bottom: 2px solid #eee;
-  padding-bottom: 10px;
-}
-
-.header h1 {
-  color: #2c3e50;
-  margin: 0;
-  font-size: 1.5rem;
+  padding-bottom: 15px;
 }
 
 .logo-img {
-  width: 400px;
+  width: 100%;
+  max-width: 400px;
+  height: auto;
   margin-bottom: 10px;
 }
 
 .header p {
   color: #7f8c8d;
+  font-size: 0.9rem;
   margin: 5px 0 0;
 }
 
+/* --- NAVEGAÇÃO --- */
+.menu-navegacao {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 25px;
+}
+
+.btn-nav {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: #f0f0f0;
+  color: #555;
+  cursor: pointer;
+  font-weight: bold;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+}
+
+.btn-nav.active {
+  background: #27ae60;
+  color: white;
+}
+
+/* --- FORMULÁRIO DE REGISTO --- */
+.form-horas {
+  animation: fadeIn 0.3s ease;
+}
+
 .campo {
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 .campo label {
   display: block;
   font-weight: bold;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   color: #34495e;
+  font-size: 0.9rem;
 }
 
 .campo select, .campo input {
@@ -57,7 +86,7 @@ body {
   border: 1px solid #ddd;
   border-radius: 6px;
   font-size: 1rem;
-  box-sizing: border-box; /* Garante que o padding não quebre a largura */
+  box-sizing: border-box;
 }
 
 .campo select:disabled {
@@ -76,32 +105,182 @@ body {
   font-weight: bold;
   cursor: pointer;
   transition: background 0.3s;
+  margin-top: 10px;
 }
 
 .btn-enviar:hover {
   background-color: #219150;
 }
 
-.tempo-container {
-  display: flex;
-  gap: 15px; /* Espaço entre os dois campos */
-  width: 100%;
+/* --- SEÇÃO DO HISTÓRICO (REGISTOS RECENTES) --- */
+.historico-section {
+  margin-top: 35px;
+  padding-top: 20px;
+  border-top: 2px solid #f0f0f0;
 }
 
-.tempo-container .campo {
-  flex: 1; /* Faz ambos dividirem o espaço igualmente */
+.historico-section h3 {
+  color: #2c3e50;
+  font-size: 1.1rem;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lista-registros {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .card-registro {
-  background-color: #ecf0f1;
-  
+  background: #ffffff;
+  border-left: 5px solid #27ae60;
+  border-radius: 8px;
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .card-info {
-  background-color: #ecf0f1;
-  padding: 20px;
-  border-radius: 8px;
-  margin-top: 20px;
-  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
 }
 
+.card-info strong {
+  font-size: 0.9rem;
+  color: #1a1a1a;
+  text-transform: uppercase;
+}
+
+.card-info span {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.card-info small {
+  font-size: 0.7rem;
+  color: #999;
+  text-transform: uppercase;
+}
+
+.card-acoes {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.card-horas strong {
+  display: block;
+  font-size: 1.1rem;
+  color: #27ae60;
+  text-align: right;
+}
+
+.card-horas span {
+  display: block;
+  font-size: 0.6rem;
+  color: #bbb;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.btn-excluir {
+  background-color: #fff1f0;
+  color: #e74c3c;
+  border: 1px solid #ffa39e;
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-excluir:hover {
+  background-color: #f5222d;
+  color: white;
+}
+
+/* --- SEÇÃO DE RELATÓRIO POR OBRA --- */
+.resumo-container {
+  animation: fadeIn 0.4s ease;
+}
+
+.resumo-card {
+  margin-bottom: 20px;
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #eee;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.resumo-header {
+  background: #2c3e50;
+  color: white;
+  padding: 12px 15px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  border-bottom: 3px solid #27ae60;
+}
+
+.resumo-dia {
+  padding: 12px 15px;
+  border-bottom: 1px solid #f9f9f9;
+}
+
+.dia-linha {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.dia-linha strong {
+  font-size: 0.85rem;
+  color: #333;
+}
+
+.colaboradores-lista {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+  gap: 2px;
+}
+
+.colaborador-item {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.dia-total {
+  text-align: right;
+  color: #27ae60;
+  font-weight: bold;
+  font-size: 0.9rem;
+  margin-top: 5px;
+  border-top: 1px dashed #eee;
+  padding-top: 4px;
+}
+
+/* --- UTILITÁRIOS --- */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.vazio {
+  text-align: center;
+  padding: 30px;
+  color: #bbb;
+  font-style: italic;
+  font-size: 0.9rem;
+}

@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { prisma } from '../../lib/prisma';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { prisma } from '../../lib/prisma'; // Importação direta que você está usando
 import { CreateRegistroDto } from './dto/create-registro.dto';
 
 @Injectable()
@@ -9,16 +9,34 @@ export class RegistrosService {
       return await prisma.registo.create({
         data: {
           colaborador: data.colaborador,
-          // Garante que a data seja um objeto Date válido
           data: new Date(data.data),
-          horas: Number(data.horas), // Força ser número
+          horas: Number(data.horas),
           tempoFormatado: data.tempoFormatado,
           obraId: data.obraId,
+        },
+        include: {
+          obra: {
+            include: {
+              empresa: true,
+            },
+          },
         },
       });
     } catch (error) {
       console.error('Erro ao salvar no banco:', error);
       throw error;
+    }
+  }
+
+  // CORRIGIDO: Removido o 'this.' e ajustado para 'registo'
+  async remove(id: string) {
+    try {
+      return await prisma.registo.delete({
+        where: { id },
+      });
+    } catch (error) {
+      console.error('Erro ao excluir:', error);
+      throw new NotFoundException(`Registo com ID ${id} não encontrado`);
     }
   }
 
