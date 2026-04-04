@@ -1,108 +1,140 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect } from "react";
 import "./App.css";
-import { empresasParceiras, obrasAtivas } from "./components/data";
-import { registroService } from "./components/Services/RegistoService";
+import api from "./components/Services/api";
 import Historico from "./components/Historico";
 import ResumoObras from "./components/ResumoObras";
 import PainelAdmin from "./components/PainelAdmin";
 
 function App() {
+  const [isAdminAutenticado, setIsAdminAutenticado] = useState(false);
   const getHoje = () => new Date().toISOString().split("T")[0];
+
+  const [empresas, setEmpresas] = useState([]);
+  const [historico, setHistorico] = useState([]);
 
   const [empresaId, setEmpresaId] = useState("");
   const [obraId, setObraId] = useState("");
+  const [responsavelNome, setResponsavelNome] = useState("");
   const [nome, setNome] = useState("");
   const [dataTrabalho, setDataTrabalho] = useState(getHoje());
   const [horasInput, setHorasInput] = useState("");
   const [minutosInput, setMinutosInput] = useState("");
 
   const [obrasFiltradas, setObrasFiltradas] = useState([]);
-  const [historico, setHistorico] = useState([]);
   const [abaAtiva, setAbaAtiva] = useState("registro");
 
   useEffect(() => {
-    setHistorico(registroService.obterTodos());
+    const carregarDados = async () => {
+      try {
+        const [resEmpresas, resRegistros] = await Promise.all([
+          api.get("/empresas"),
+          api.get("/registros"),
+        ]);
+        setEmpresas(resEmpresas.data);
+        setHistorico(resRegistros.data);
+      } catch (err) {
+        console.error("Erro ao carregar dados:", err);
+      }
+    };
+    carregarDados();
   }, []);
 
   useEffect(() => {
-    const filtradas = obrasAtivas.filter((o) => o.empresaId === empresaId);
-    setObrasFiltradas(filtradas);
-    setObraId("");
-  }, [empresaId]);
-
-  // --- NOVAS FUNÇÕES PARA O PAINEL ADMIN ---
-  const handleAdicionarEmpresa = (novaEmpresa) => {
-    const novoItem = { id: Date.now().toString(), ...novaEmpresa };
-    empresasParceiras.push(novoItem);
-    // Força a atualização da interface
-    setAbaAtiva("registro");
-    setTimeout(() => setAbaAtiva("admin"), 10);
-  };
-
-  const handleAdicionarObra = (novaObra) => {
-    const novoItem = { id: Date.now().toString(), ...novaObra };
-    obrasAtivas.push(novoItem);
-    // Força a atualização da interface
-    setAbaAtiva("registro");
-    setTimeout(() => setAbaAtiva("admin"), 10);
-  };
-  // ------------------------------------------
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const empresaNome = empresasParceiras.find((e) => e.id === empresaId)?.nome;
-    const obraNome = obrasAtivas.find((o) => o.id === obraId)?.nome;
-
-    const h = Number(horasInput) || 0;
-    const m = Number(minutosInput) || 0;
-
-    if (h === 0 && m === 0) {
-      alert("Por favor, introduza as horas ou os minutos do trabalho.");
-      return;
+    if (empresaId) {
+      const empresaSel = empresas.find((e) => e.id === empresaId);
+      setObrasFiltradas(empresaSel?.obras || []);
+    } else {
+      setObrasFiltradas([]);
     }
-
-    const totalDecimal = h + m / 60;
-
-    const novoRegistro = {
-      id: Date.now(),
-      empresa: empresaNome,
-      obra: obraNome,
-      colaborador: nome,
-      horas: totalDecimal.toFixed(2),
-      tempoFormatado: `${h}h ${m}m`,
-      data: new Date(dataTrabalho).toLocaleDateString("pt-PT"),
-    };
-
-    const atualizado = registroService.salvar(novoRegistro);
-    setHistorico(atualizado);
-
-    alert(
-      `REGISTRO SALVO COM SUCESSO!\n\n` +
-        `Data: ${novoRegistro.data}\n` +
-        `Empresa: ${empresaNome}\n` +
-        `Obra: ${obraNome}\n` +
-        `Tempo: ${h}h ${m}m`,
-    );
-
     setObraId("");
-    setHorasInput("");
-    setMinutosInput("");
-  };
+    setResponsavelNome("");
+  }, [empresaId, empresas]);
 
-  const handleExcluir = (id) => {
-    if (window.confirm("Tem certeza que deseja apagar este registo?")) {
-      const atualizado = registroService.excluir(id);
-      setHistorico(atualizado);
+  useEffect(() => {
+    if (obraId) {
+      const obraSelecionada = obrasFiltradas.find((o) => o.id === obraId);
+      setResponsavelNome(obraSelecionada?.responsavel?.nome || "Não definido");
+    } else {
+      setResponsavelNome("");
     }
-  };
+  }, [obraId, obrasFiltradas]);
 
   const acessarAdmin = () => {
+    if (isAdminAutenticado) {
+      setAbaAtiva("admin");
+      return;
+    }
     const senha = prompt("Digite a senha de administrador:");
     if (senha === "acsilvaadmin") {
+      setIsAdminAutenticado(true);
       setAbaAtiva("admin");
     } else {
       alert("Senha incorreta!");
+    }
+  };
+
+  const handleCadastroUnificado = async (dados) => {
+    try {
+      await api.post("/empresas/completo", dados);
+      const res = await api.get("/empresas");
+      setEmpresas(res.data);
+      alert("Cadastrado com sucesso!");
+    } catch (err) {
+      alert("Erro ao cadastrar. Verifique se a empresa já existe.");
+    }
+  };
+
+  // --- ALTERAÇÃO PRINCIPAL AQUI ---
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Convertendo inputs para números para bater com o DTO/Prisma
+    const h = parseInt(horasInput) || 0;
+    const m = parseInt(minutosInput) || 0;
+
+    if (h === 0 && m === 0) {
+      alert("Introduza o tempo de trabalho.");
+      return;
+    }
+
+    // Este objeto deve ter EXATAMENTE as propriedades do seu CreateRegistroDto
+    const novoRegistro = {
+      colaborador: nome,
+      data: new Date(dataTrabalho).toISOString(), // O NestJS/Prisma prefere ISO String para datas
+      horas: h,
+      tempoFormatado: `${h}h ${m}m`,
+      obraId: obraId,
+    };
+
+    try {
+      const res = await api.post("/registros", novoRegistro);
+
+      // Atualiza o histórico local com o novo registro vindo do banco
+      setHistorico([res.data, ...historico]);
+
+      alert("Registo salvo!");
+
+      // Limpa apenas os campos de tempo e obra, mantendo o colaborador e data se desejar
+      setObraId("");
+      setHorasInput("");
+      setMinutosInput("");
+      setResponsavelNome("");
+    } catch (err) {
+      console.error("Erro detalhado do Backend:", err.response?.data);
+      alert("Erro ao salvar registro. Verifique os campos.");
+    }
+  };
+
+  const handleExcluir = async (id) => {
+    if (window.confirm("Apagar este registo?")) {
+      try {
+        await api.delete(`/registros/${id}`);
+        setHistorico(historico.filter((r) => r.id !== id));
+      } catch (err) {
+        alert("Erro ao excluir.");
+      }
     }
   };
 
@@ -110,7 +142,7 @@ function App() {
     <div className="container">
       <header className="header">
         <img className="logo-img" src="logo_ac_silva.png" alt="Logo AC Silva" />
-        <p>Folha de Obra Digital</p>
+        <p>Folha de Obra Digital (Cloud Sync)</p>
       </header>
 
       <nav className="menu-navegacao">
@@ -138,7 +170,7 @@ function App() {
         <>
           <form className="form-horas" onSubmit={handleSubmit}>
             <div className="campo">
-              <label>Data do Trabalho:</label>
+              <label>Data:</label>
               <input
                 type="date"
                 value={dataTrabalho}
@@ -148,14 +180,14 @@ function App() {
             </div>
 
             <div className="campo">
-              <label>Empresa Parceira:</label>
+              <label>Empresa:</label>
               <select
                 value={empresaId}
                 onChange={(e) => setEmpresaId(e.target.value)}
                 required
               >
-                <option value="">Selecione a empresa...</option>
-                {empresasParceiras.map((emp) => (
+                <option value="">Selecione...</option>
+                {empresas.map((emp) => (
                   <option key={emp.id} value={emp.id}>
                     {emp.nome}
                   </option>
@@ -164,14 +196,14 @@ function App() {
             </div>
 
             <div className="campo">
-              <label>Obra / Serviço:</label>
+              <label>Obra:</label>
               <select
                 value={obraId}
                 onChange={(e) => setObraId(e.target.value)}
                 disabled={!empresaId}
                 required
               >
-                <option value="">Selecione a obra...</option>
+                <option value="">Selecione...</option>
                 {obrasFiltradas.map((obra) => (
                   <option key={obra.id} value={obra.id}>
                     {obra.nome}
@@ -180,8 +212,27 @@ function App() {
               </select>
             </div>
 
+            {responsavelNome && (
+              <div className="campo">
+                <label style={{ color: "#27ae60", fontSize: "0.85rem" }}>
+                  Responsável pela Obra:
+                </label>
+                <input
+                  type="text"
+                  value={responsavelNome}
+                  readOnly
+                  style={{
+                    backgroundColor: "#f0fdf4",
+                    border: "1px solid #bbf7d0",
+                    color: "#166534",
+                    fontWeight: "bold",
+                  }}
+                />
+              </div>
+            )}
+
             <div className="campo">
-              <label>Nome do Colaborador:</label>
+              <label>Colaborador:</label>
               <input
                 type="text"
                 value={nome}
@@ -191,31 +242,34 @@ function App() {
               />
             </div>
 
-            <div className="tempo-container">
-              <div className="campo">
-                <label>Horas:</label>
+            <div className="campo">
+              <label>Tempo de Trabalho:</label>
+              <div style={{ display: "flex", gap: "10px", width: "100%" }}>
                 <input
                   type="number"
                   value={horasInput}
                   onChange={(e) => setHorasInput(e.target.value)}
-                  placeholder="0"
+                  placeholder="Horas"
                   min="0"
+                  style={{ flex: 1, padding: "10px" }}
                 />
-              </div>
-              <div className="campo">
-                <label>Minutos:</label>
                 <input
                   type="number"
                   value={minutosInput}
                   onChange={(e) => setMinutosInput(e.target.value)}
-                  placeholder="0-59"
+                  placeholder="Minutos"
                   min="0"
                   max="59"
+                  style={{ flex: 1, padding: "10px" }}
                 />
               </div>
             </div>
 
-            <button type="submit" className="btn-enviar">
+            <button
+              type="submit"
+              className="btn-enviar"
+              style={{ marginTop: "10px" }}
+            >
               Registar no Sistema
             </button>
           </form>
@@ -226,14 +280,17 @@ function App() {
 
       {abaAtiva === "resumo" && <ResumoObras registros={historico} />}
 
-      {abaAtiva === "admin" && (
-        <PainelAdmin
-          empresas={empresasParceiras}
-          obras={obrasAtivas}
-          onAdicionarEmpresa={handleAdicionarEmpresa}
-          onAdicionarObra={handleAdicionarObra}
-        />
-      )}
+      {abaAtiva === "admin" &&
+        (isAdminAutenticado ? (
+          <PainelAdmin onAdicionarTudo={handleCadastroUnificado} />
+        ) : (
+          <div style={{ textAlign: "center", marginTop: "50px" }}>
+            <p>Acesso Restrito ao Administrador.</p>
+            <button onClick={acessarAdmin} className="btn-nav">
+              Validar Senha
+            </button>
+          </div>
+        ))}
     </div>
   );
 }

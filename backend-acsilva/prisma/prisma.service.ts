@@ -1,17 +1,19 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 
 @Injectable()
-export class PrismaService implements OnModuleInit, OnModuleDestroy {
-  // Criamos um acesso direto ao cliente que você já configurou
-  public client = new PrismaClient();
-  responsavel: any;
+export class PrismaService extends PrismaClient implements OnModuleInit {
+  constructor() {
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    const adapter = new PrismaPg(pool);
 
-  async onModuleInit() {
-    await this.client.$connect();
+    // O segredo para a v7 parar de dar erro é passar o adapter aqui:
+    super({ adapter });
   }
 
-  async onModuleDestroy() {
-    await this.client.$disconnect();
+  async onModuleInit() {
+    await this.$connect();
   }
 }
