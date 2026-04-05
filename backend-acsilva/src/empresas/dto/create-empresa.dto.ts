@@ -1,1 +1,15 @@
-export class CreateEmpresaDto {}
+import { IsString, IsNotEmpty } from 'class-validator';
+
+export class CreateEmpresaDto {
+  @IsString()
+  @IsNotEmpty()
+  nome: string;
+
+  @IsString()
+  @IsNotEmpty()
+  obraNome: string;
+
+  @IsString()
+  @IsNotEmpty()
+  responsavel: string;
+}
