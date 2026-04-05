@@ -1,22 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CreateEmpresaDto } from './dto/create-empresa.dto'; // Importe o DTO
 
 @Injectable()
 export class EmpresasService {
   constructor(private prisma: PrismaService) {}
 
-  async criarCompleto(dados: {
-    nome: string;
-    obraNome: string;
-    responsavel: string;
-  }) {
+  async criarCompleto(dados: CreateEmpresaDto) {
+    // Use o DTO aqui
     try {
-      // Usamos uma transação para garantir que tudo ocorra em ordem
       return await this.prisma.$transaction(async (tx) => {
         // 1. Procura a empresa pelo nome. Se existir, usa ela. Se não, cria.
         const empresa = await tx.empresa.upsert({
           where: { nome: dados.nome },
-          update: {}, // Não altera nada se já existir
+          update: {},
           create: { nome: dados.nome },
         });
 
@@ -53,7 +50,7 @@ export class EmpresasService {
       include: {
         obras: {
           include: {
-            responsavel: true, // Importante para o frontend mostrar o nome do responsável
+            responsavel: true,
           },
         },
       },
