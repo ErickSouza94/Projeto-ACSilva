@@ -1,11 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common'; // Importe isto
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Garante que o Nest valide os dados que vêm do Frontend automaticamente
+  // Validação global de DTOs
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -14,12 +14,18 @@ async function bootstrap() {
     }),
   );
 
+  // Configuração de CORS ajustada
   app.enableCors({
-    origin: 'https://projeto-ac-silva.vercel.app/',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    // Removida a barra "/" do final para evitar erro de correspondência
+    origin: 'https://projeto-ac-silva.vercel.app', 
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
+    allowedHeaders: 'Content-Type, Accept, Authorization',
   });
 
+  // O Render define a porta automaticamente via variável de ambiente
   await app.listen(process.env.PORT || 3000);
 }
+
+// Em algumas versões do Nest, o 'void' pode ser omitido, mas não causa erro.
 void bootstrap();
