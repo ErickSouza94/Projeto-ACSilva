@@ -16,10 +16,10 @@ async function bootstrap() {
 
   // Configuração de CORS ajustada
   app.enableCors({
-    origin: 'https://projeto-ac-silva.vercel.app',
+    origin: true, // Isso reflete a origem da requisição, aceitando qualquer uma
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
-    allowedHeaders: 'Content-Type, Accept, Authorization',
+    allowedHeaders: 'Content-Type, Accept, Authorization, X-Requested-With',
   });
 
   // O Render define a porta automaticamente via variável de ambiente
