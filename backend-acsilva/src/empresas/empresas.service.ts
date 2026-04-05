@@ -1,23 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CreateEmpresaDto } from './dto/create-empresa.dto'; // Importe o DTO
+import { CreateEmpresaDto } from './dto/create-empresa.dto';
 
 @Injectable()
 export class EmpresasService {
   constructor(private prisma: PrismaService) {}
 
   async criarCompleto(dados: CreateEmpresaDto) {
-    // Use o DTO aqui
     try {
       return await this.prisma.$transaction(async (tx) => {
-        // 1. Procura a empresa pelo nome. Se existir, usa ela. Se não, cria.
+        // 1. Procura a empresa pelo nome ou cria
         const empresa = await tx.empresa.upsert({
           where: { nome: dados.nome },
           update: {},
           create: { nome: dados.nome },
         });
 
-        // 2. Criamos o Responsável associado a essa Empresa
+        // 2. Criamos o Responsável associado
         const novoResponsavel = await tx.responsavel.create({
           data: {
             nome: dados.responsavel,
@@ -25,12 +24,13 @@ export class EmpresasService {
           },
         });
 
-        // 3. Criamos a Obra associada à Empresa e ao Responsável
+        // 3. Criamos a Obra associada
         return await tx.obra.create({
           data: {
             nome: dados.obraNome,
             empresaId: empresa.id,
             responsavelId: novoResponsavel.id,
+            // O campo 'concluida' já inicia como false por padrão do Banco
           },
           include: {
             empresa: true,
@@ -44,6 +44,7 @@ export class EmpresasService {
     }
   }
 
+  // Lista todas as empresas e inclui o campo 'concluida' das obras
   async findAll() {
     return this.prisma.empresa.findMany({
       orderBy: { nome: 'asc' },
@@ -54,6 +55,16 @@ export class EmpresasService {
           },
         },
       },
+    });
+  }
+
+  /**
+   * ATUALIZAÇÃO: Altera o status da obra no banco de dados
+   */
+  async atualizarStatusObra(id: string, concluida: boolean) {
+    return await this.prisma.obra.update({
+      where: { id },
+      data: { concluida },
     });
   }
 }
