@@ -9,6 +9,7 @@ import PainelAdmin from "./components/PainelAdmin";
 
 function App() {
   const [isAdminAutenticado, setIsAdminAutenticado] = useState(false);
+  const [carregando, setCarregando] = useState(false); // NOVO ESTADO
   const getHoje = () => new Date().toISOString().split("T")[0];
 
   const [empresas, setEmpresas] = useState([]);
@@ -78,14 +79,26 @@ function App() {
     }
   };
 
+  // --- CADASTRO DE EMPRESA/OBRA (ATUALIZADO COM CARREGANDO) ---
   const handleCadastroUnificado = async (dados) => {
+    setCarregando(true); // Inicia o estado de espera
     try {
       await api.post("/empresas/completo", dados);
+
+      // Atualiza a lista de empresas após o cadastro
       const res = await api.get("/empresas");
       setEmpresas(res.data);
-      alert("Cadastrado com sucesso!");
+
+      alert("Empresa e Obra cadastradas com sucesso!");
+      setAbaAtiva("registro"); // Opcional: Volta para a tela de registro
     } catch (err) {
-      alert("Erro ao cadastrar. Verifique se a empresa já existe.");
+      console.error("Erro no cadastro:", err);
+      alert(
+        err.response?.data?.message ||
+          "Erro ao cadastrar. O servidor pode estar iniciando, tente novamente em 30 segundos.",
+      );
+    } finally {
+      setCarregando(false); // Libera o botão independente de sucesso ou erro
     }
   };
 
@@ -109,7 +122,7 @@ function App() {
     const novoRegistro = {
       colaborador: nome,
       data: new Date(dataTrabalho).toISOString(),
-      horas: h + m / 60, // Convertendo para decimal para facilitar cálculos no resumo
+      horas: h + m / 60,
       tempoFormatado: `${h}h ${m}m`,
       obraId: obraId,
     };
@@ -132,7 +145,7 @@ function App() {
     }
   };
 
-  // --- EXCLUSÃO DE REGISTO (ATUALIZADO) ---
+  // --- EXCLUSÃO DE REGISTO ---
   const handleExcluir = async (id) => {
     if (!id) {
       alert("Erro: ID do registo não identificado.");
@@ -141,15 +154,11 @@ function App() {
 
     if (window.confirm("Apagar este registo permanentemente?")) {
       try {
-        console.log("Tentando excluir registo com ID:", id);
         await api.delete(`/registros/${id}`);
-
-        // Remove do estado local apenas se o servidor confirmar a exclusão
         setHistorico((prev) => prev.filter((r) => r.id !== id));
         alert("Registo excluído com sucesso!");
       } catch (err) {
         const erroServidor = err.response?.data?.message || err.message;
-        console.error("Erro ao excluir no Backend:", erroServidor);
         alert(`Erro ao excluir: ${erroServidor}`);
       }
     }
@@ -299,7 +308,10 @@ function App() {
 
       {abaAtiva === "admin" &&
         (isAdminAutenticado ? (
-          <PainelAdmin onAdicionarTudo={handleCadastroUnificado} />
+          <PainelAdmin
+            onAdicionarTudo={handleCadastroUnificado}
+            isCarregando={carregando} // PASSA O ESTADO PARA O COMPONENTE
+          />
         ) : (
           <div style={{ textAlign: "center", marginTop: "50px" }}>
             <p>Acesso Restrito ao Administrador.</p>

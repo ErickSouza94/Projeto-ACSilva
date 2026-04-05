@@ -1,6 +1,10 @@
 import { useState } from "react";
 
-export default function PainelAdmin({ onAdicionarTudo = () => {} }) {
+// Adicionado a prop isCarregando enviada pelo App.jsx
+export default function PainelAdmin({
+  onAdicionarTudo = () => {},
+  isCarregando = false,
+}) {
   const [formData, setFormData] = useState({
     nomeEmpresa: "",
     nomeObra: "",
@@ -24,14 +28,14 @@ export default function PainelAdmin({ onAdicionarTudo = () => {} }) {
       return;
     }
 
-    // ENVIAR DADOS: Ajustado para bater com a lógica do App.jsx e Backend
+    // ENVIAR DADOS: Passando o objeto para a função do App.jsx
     onAdicionarTudo({
-      nome: formData.nomeEmpresa, // Nome da Empresa
-      obraNome: formData.nomeObra, // Nome da Obra
-      responsavel: formData.nomeResponsavel, // Nome do Responsável
+      nome: formData.nomeEmpresa,
+      obraNome: formData.nomeObra,
+      responsavel: formData.nomeResponsavel,
     });
 
-    // Limpa o formulário
+    // Limpa o formulário após o envio
     setFormData({ nomeEmpresa: "", nomeObra: "", nomeResponsavel: "" });
   };
 
@@ -85,12 +89,14 @@ export default function PainelAdmin({ onAdicionarTudo = () => {} }) {
               value={formData.nomeEmpresa}
               onChange={handleChange}
               required
+              disabled={isCarregando} // Desabilita inputs durante envio
               style={{
                 width: "100%",
                 padding: "10px",
                 borderRadius: "6px",
                 border: "1px solid #ccc",
-                boxSizing: "border-box", // Garante que o padding não quebre a largura
+                boxSizing: "border-box",
+                backgroundColor: isCarregando ? "#eee" : "white",
               }}
             />
           </div>
@@ -112,12 +118,14 @@ export default function PainelAdmin({ onAdicionarTudo = () => {} }) {
               value={formData.nomeObra}
               onChange={handleChange}
               required
+              disabled={isCarregando}
               style={{
                 width: "100%",
                 padding: "10px",
                 borderRadius: "6px",
                 border: "1px solid #ccc",
                 boxSizing: "border-box",
+                backgroundColor: isCarregando ? "#eee" : "white",
               }}
             />
           </div>
@@ -139,34 +147,41 @@ export default function PainelAdmin({ onAdicionarTudo = () => {} }) {
               value={formData.nomeResponsavel}
               onChange={handleChange}
               required
+              disabled={isCarregando}
               style={{
                 width: "100%",
                 padding: "10px",
                 borderRadius: "6px",
                 border: "1px solid #ccc",
                 boxSizing: "border-box",
+                backgroundColor: isCarregando ? "#eee" : "white",
               }}
             />
           </div>
 
           <button
             type="submit"
+            disabled={isCarregando} // Botão fica cinza e não clicável
             style={{
               marginTop: "10px",
-              background: "#27ae60",
+              background: isCarregando ? "#95a5a6" : "#27ae60",
               color: "white",
               padding: "12px",
               border: "none",
               borderRadius: "6px",
-              cursor: "pointer",
+              cursor: isCarregando ? "not-allowed" : "pointer",
               fontSize: "1rem",
               fontWeight: "bold",
               transition: "background 0.3s",
             }}
-            onMouseOver={(e) => (e.target.style.background = "#219150")}
-            onMouseOut={(e) => (e.target.style.background = "#27ae60")}
+            onMouseOver={(e) => {
+              if (!isCarregando) e.target.style.background = "#219150";
+            }}
+            onMouseOut={(e) => {
+              if (!isCarregando) e.target.style.background = "#27ae60";
+            }}
           >
-            Finalizar Cadastro
+            {isCarregando ? "A salvar na nuvem..." : "Finalizar Cadastro"}
           </button>
         </form>
       </section>
