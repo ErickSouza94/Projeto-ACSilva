@@ -1,14 +1,45 @@
 import React from "react";
+import axios from "axios"; // Certifique-se de que o axios está instalado
 
-function ResumoObras({ registros }) {
-  // --- FUNÇÃO PARA EXPORTAR CSV ---
+function ResumoObras({ registros, setRegistros }) {
+  // --- FUNÇÃO PARA COMUNICAR COM O BACKEND ---
+  const alternarStatusObra = async (obraId, statusAtual) => {
+    try {
+      const novoStatus = !statusAtual;
+
+      // AJUSTE: Use a URL do seu backend no Render
+      // Exemplo: https://seu-projeto.onrender.com/empresas/obra/${obraId}/status
+      await axios.patch(
+        `https://backend-acsilva.onrender.com/empresas/obra/${obraId}/status`,
+        {
+          concluida: novoStatus,
+        },
+      );
+
+      // Atualiza o estado local para mudar a cor na tela sem dar F5
+      const novosRegistros = registros.map((reg) => {
+        if (reg.obraId === obraId || reg.obra?.id === obraId) {
+          return {
+            ...reg,
+            obra: { ...reg.obra, concluida: novoStatus },
+          };
+        }
+        return reg;
+      });
+      setRegistros(novosRegistros);
+    } catch (error) {
+      console.error("Erro ao atualizar status:", error);
+      alert(
+        "Erro ao atualizar o status da obra. Verifique se o backend está online.",
+      );
+    }
+  };
+
+  // --- EXPORTAR PARA EXCEL (CSV) ---
   const exportarParaCSV = () => {
     if (!registros || registros.length === 0) return;
 
-    // Cabeçalho adaptado para Excel em Português (ponto e vírgula)
-    const cabecalho =
-      "Data;Empresa;Obra;Colaborador;Tempo (Formatado);Horas (Decimais)\n";
-
+    const cabecalho = "Data;Empresa;Obra;Colaborador;Tempo;Status\n";
     const linhas = registros
       .map((reg) => {
         const data = new Date(reg.data).toLocaleDateString("pt-PT");
@@ -16,87 +47,49 @@ function ResumoObras({ registros }) {
         const obra = reg.obra?.nome || "N/A";
         const colaborador = reg.colaborador || "Anónimo";
         const tempo = reg.tempoFormatado || "0h 0m";
-        const horas = Number(reg.horas || 0)
-          .toFixed(2)
-          .replace(".", ","); // Vírgula para decimal no Excel PT
+        const status = reg.obra?.concluida ? "CONCLUIDA" : "EM ANDAMENTO";
 
-        return `${data};${empresa};${obra};${colaborador};${tempo};${horas}`;
+        return `${data};${empresa};${obra};${colaborador};${tempo};${status}`;
       })
       .join("\n");
 
-    const csvFinal = cabecalho + linhas;
-    // \ufeff garante que o Excel reconheça caracteres especiais (acentos)
-    const blob = new Blob(["\ufeff", csvFinal], {
+    const blob = new Blob(["\ufeff", cabecalho + linhas], {
       type: "text/csv;charset=utf-8;",
     });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-
-    link.setAttribute("href", url);
-    link.setAttribute(
-      "download",
-      `Relatorio_Obras_AC_Silva_${new Date().toLocaleDateString("pt-PT")}.csv`,
-    );
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
+    link.href = url;
+    link.download = `Relatorio_Obras.csv`;
     link.click();
-    document.body.removeChild(link);
   };
 
-  // 1. Verificação inicial
-  if (!registros || registros.length === 0) {
-    return (
-      <div className="vazio">
-        Nenhum registo encontrado para gerar o resumo.
-      </div>
-    );
-  }
-
-  // 2. Lógica de agrupamento original
+  // --- AGRUPAMENTO PARA EXIBIÇÃO ---
   const processarDados = () => {
     return registros.reduce((acc, reg) => {
-      const obraNome = reg.obra?.nome || "Obra s/ Nome";
-      const empresaNome = reg.obra?.empresa?.nome || "Empresa s/ Nome";
-      const chave = `${empresaNome} | ${obraNome}`;
+      const obraId = reg.obra?.id || reg.obraId;
+      const obraNome = reg.obra?.nome || "Sem Nome";
+      const empresaNome = reg.obra?.empresa?.nome || "Sem Empresa";
+      const concluida = reg.obra?.concluida || false;
+      const chave = `${empresaNome} - ${obraNome}`;
 
       if (!acc[chave]) {
         acc[chave] = {
+          id: obraId,
           empresa: empresaNome,
           obra: obraNome,
-          datas: {},
+          concluida,
+          dados: [],
         };
       }
-
-      const dataObjeto = new Date(reg.data);
-      const dataFormatada = isNaN(dataObjeto)
-        ? "Data Inválida"
-        : dataObjeto.toLocaleDateString("pt-PT");
-
-      if (!acc[chave].datas[dataFormatada]) {
-        acc[chave].datas[dataFormatada] = {
-          colaboradores: [],
-          totalDia: 0,
-        };
-      }
-
-      acc[chave].datas[dataFormatada].colaboradores.push({
-        nome: reg.colaborador || "Anónimo",
-        tempo: reg.tempoFormatado || "0h 0m",
-        horasDecimais: Number(reg.horas) || 0,
-      });
-
-      acc[chave].datas[dataFormatada].totalDia += Number(reg.horas) || 0;
-
+      acc[chave].dados.push(reg);
       return acc;
     }, {});
   };
 
   const resumo = processarDados();
 
-  // 3. Renderização
   return (
     <div className="resumo-container">
-      {/* Cabeçalho com Título e Botão lado a lado */}
       <div
         style={{
           display: "flex",
@@ -105,54 +98,71 @@ function ResumoObras({ registros }) {
           marginBottom: "20px",
         }}
       >
-        <h2 style={{ color: "#2c3e50", margin: 0, fontSize: "1.2rem" }}>
-          Relatório por Obra
-        </h2>
-
-        <button
-          onClick={exportarParaCSV}
-          style={{
-            backgroundColor: "#27ae60",
-            color: "white",
-            border: "none",
-            padding: "8px 16px",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontWeight: "bold",
-            fontSize: "0.9rem",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-          }}
-        >
-          <span>📥</span> Exportar Excel
+        <h2>Resumo por Obra</h2>
+        <button onClick={exportarParaCSV} className="btn-exportar">
+          📥 Baixar Excel
         </button>
       </div>
 
-      {Object.values(resumo).map((obraGroup, index) => (
-        <div key={index} className="resumo-card">
-          <div className="resumo-header">
-            {obraGroup.empresa} | {obraGroup.obra}
+      {Object.values(resumo).map((group, index) => (
+        <div
+          key={index}
+          className="resumo-card"
+          style={{
+            borderLeft: group.concluida
+              ? "10px solid #27ae60"
+              : "10px solid #3498db",
+            backgroundColor: group.concluida ? "#f9fff9" : "#fff",
+            marginBottom: "15px",
+            borderRadius: "8px",
+            boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+          }}
+        >
+          <div
+            style={{
+              padding: "10px 15px",
+              backgroundColor: group.concluida ? "#27ae60" : "#2c3e50",
+              color: "white",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              borderTopLeftRadius: "6px",
+              borderTopRightRadius: "6px",
+            }}
+          >
+            <strong style={{ fontSize: "1.1rem" }}>
+              {group.empresa} | {group.obra} {group.concluida ? "✅" : "🏗️"}
+            </strong>
+
+            <button
+              onClick={() => alternarStatusObra(group.id, group.concluida)}
+              style={{
+                padding: "6px 12px",
+                cursor: "pointer",
+                backgroundColor: group.concluida ? "#e67e22" : "#2ecc71",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                fontWeight: "bold",
+              }}
+            >
+              {group.concluida ? "Reabrir Obra" : "Finalizar Obra"}
+            </button>
           </div>
 
-          <div className="resumo-body">
-            {Object.entries(obraGroup.datas).map(([data, info]) => (
-              <div key={data} className="resumo-dia">
-                <div className="dia-linha">
-                  <strong>{data}</strong>
-                  <div className="colaboradores-lista">
-                    {info.colaboradores.map((c, i) => (
-                      <div key={i} className="colaborador-item">
-                        <span>
-                          {c.nome}: <strong>{c.tempo}</strong>
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="dia-total">
-                  Total: {info.totalDia.toFixed(2)}h
-                </div>
+          <div style={{ padding: "15px" }}>
+            {/* Aqui entra a sua tabela ou lista de tempos por colaborador */}
+            {group.dados.map((d, i) => (
+              <div
+                key={i}
+                style={{
+                  fontSize: "0.9rem",
+                  borderBottom: "1px solid #eee",
+                  padding: "5px 0",
+                }}
+              >
+                {d.colaborador}: {d.tempoFormatado} (
+                {new Date(d.data).toLocaleDateString()})
               </div>
             ))}
           </div>
