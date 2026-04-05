@@ -16,8 +16,7 @@ async function bootstrap() {
 
   // Configuração de CORS ajustada
   app.enableCors({
-    // Removida a barra "/" do final para evitar erro de correspondência
-    origin: 'https://projeto-ac-silva.vercel.app', 
+    origin: 'https://projeto-ac-silva.vercel.app',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
     allowedHeaders: 'Content-Type, Accept, Authorization',
