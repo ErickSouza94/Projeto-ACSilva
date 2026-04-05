@@ -1,50 +1,44 @@
 import React from "react";
-import axios from "axios";
+// Importamos a sua configuração de api para evitar erros de conexão
+import api from "./Services/api";
 
 function ResumoObras({ registros, setRegistros }) {
-  // --- FUNÇÃO PARA COMUNICAR COM O BACKEND ---
   const alternarStatusObra = async (obraId, statusAtual) => {
-    if (!obraId) {
-      alert("Erro: ID da obra não encontrado.");
-      return;
-    }
+    if (!obraId) return;
+
+    // Se a obra já está concluída, não fazemos nada (para remover a função de reabrir)
+    if (statusAtual) return;
 
     try {
-      const novoStatus = !statusAtual;
-
-      // URL ATUALIZADA conforme seu painel do Render
-      await axios.patch(
-        `https://acsilva-backend-render.onrender.com/empresas/obra/${obraId}/status`,
-        {
-          concluida: novoStatus,
-        },
-      );
-
-      // Atualiza o estado local para mudar a cor na tela sem precisar de F5
-      const novosRegistros = registros.map((reg) => {
-        // Verifica o ID tanto no objeto aninhado quanto na raiz do registro
-        if (reg.obraId === obraId || reg.obra?.id === obraId) {
-          return {
-            ...reg,
-            obra: { ...reg.obra, concluida: novoStatus },
-          };
-        }
-        return reg;
+      // Usamos a 'api' que você já configurou no projeto
+      await api.patch(`/empresas/obra/${obraId}/status`, {
+        concluida: true,
       });
 
-      setRegistros(novosRegistros);
+      // Atualiza o estado local para refletir a mudança na tela
+      if (typeof setRegistros === "function") {
+        const novosRegistros = registros.map((reg) => {
+          if (reg.obraId === obraId || reg.obra?.id === obraId) {
+            return {
+              ...reg,
+              obra: { ...reg.obra, concluida: true },
+            };
+          }
+          return reg;
+        });
+        setRegistros(novosRegistros);
+      }
     } catch (error) {
       console.error("Erro ao atualizar status:", error);
       alert(
-        "Erro ao conectar com o servidor. Verifique se o backend está online no Render.",
+        "Erro ao conectar com o servidor. Tente novamente em alguns segundos.",
       );
     }
   };
 
-  // --- EXPORTAR PARA EXCEL (CSV) ---
+  // --- EXPORTAR PARA EXCEL ---
   const exportarParaCSV = () => {
     if (!registros || registros.length === 0) return;
-
     const cabecalho = "Data;Empresa;Obra;Colaborador;Tempo;Status\n";
     const linhas = registros
       .map((reg) => {
@@ -54,7 +48,6 @@ function ResumoObras({ registros, setRegistros }) {
         const colaborador = reg.colaborador || "Anónimo";
         const tempo = reg.tempoFormatado || "0h 0m";
         const status = reg.obra?.concluida ? "CONCLUIDA" : "EM ANDAMENTO";
-
         return `${data};${empresa};${obra};${colaborador};${tempo};${status}`;
       })
       .join("\n");
@@ -69,7 +62,6 @@ function ResumoObras({ registros, setRegistros }) {
     link.click();
   };
 
-  // --- AGRUPAMENTO PARA EXIBIÇÃO ---
   const processarDados = () => {
     return registros.reduce((acc, reg) => {
       const obraId = reg.obra?.id || reg.obraId;
@@ -100,7 +92,6 @@ function ResumoObras({ registros, setRegistros }) {
         style={{
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "center",
           marginBottom: "20px",
         }}
       >
@@ -135,24 +126,31 @@ function ResumoObras({ registros, setRegistros }) {
               alignItems: "center",
             }}
           >
-            <strong style={{ fontSize: "1.1rem" }}>
+            <strong>
               {group.empresa} | {group.obra} {group.concluida ? "✅" : "🏗️"}
             </strong>
 
-            <button
-              onClick={() => alternarStatusObra(group.id, group.concluida)}
-              style={{
-                padding: "6px 12px",
-                cursor: "pointer",
-                backgroundColor: group.concluida ? "#e67e22" : "#2ecc71",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                fontWeight: "bold",
-              }}
-            >
-              {group.concluida ? "Reabrir Obra" : "Finalizar Obra"}
-            </button>
+            {/* LÓGICA DO BOTÃO ALTERADA AQUI */}
+            {group.concluida ? (
+              <span style={{ fontWeight: "bold", padding: "6px 12px" }}>
+                Obra Concluída
+              </span>
+            ) : (
+              <button
+                onClick={() => alternarStatusObra(group.id, group.concluida)}
+                style={{
+                  padding: "6px 12px",
+                  cursor: "pointer",
+                  backgroundColor: "#2ecc71",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  fontWeight: "bold",
+                }}
+              >
+                Finalizar Obra
+              </button>
+            )}
           </div>
 
           <div style={{ padding: "15px" }}>
@@ -163,7 +161,6 @@ function ResumoObras({ registros, setRegistros }) {
                   fontSize: "0.9rem",
                   borderBottom: "1px solid #eee",
                   padding: "5px 0",
-                  color: group.concluida ? "#777" : "#333",
                 }}
               >
                 <strong>{d.colaborador}</strong>: {d.tempoFormatado} (
