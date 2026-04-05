@@ -208,6 +208,31 @@ function App() {
                 ))}
               </select>
             </div>
+
+            {/* --- BLOCO DO RESPONSÁVEL ADICIONADO AQUI --- */}
+            {obraId && (
+              <div
+                className="campo"
+                style={{ marginTop: "-10px", marginBottom: "15px" }}
+              >
+                <label style={{ fontSize: "0.85rem", color: "#666" }}>
+                  Responsável pela Obra:
+                </label>
+                <div
+                  style={{
+                    padding: "10px",
+                    backgroundColor: "#f0f2f5",
+                    borderRadius: "5px",
+                    borderLeft: "5px solid #2ecc71",
+                    fontWeight: "bold",
+                    color: "#333",
+                  }}
+                >
+                  👤 {responsavelNome}
+                </div>
+              </div>
+            )}
+
             <div className="campo">
               <label>Colaborador:</label>
               <input
@@ -242,7 +267,6 @@ function App() {
         </>
       )}
 
-      {/* --- LINHA ALTERADA ABAIXO --- */}
       {abaAtiva === "resumo" && (
         <ResumoObras registros={historico} setRegistros={setHistorico} />
       )}
