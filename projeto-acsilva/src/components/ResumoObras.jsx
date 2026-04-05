@@ -13,7 +13,6 @@ function ResumoObras({ registros, setRegistros }) {
 
       if (typeof setRegistros === "function") {
         const novosRegistros = registros.map((reg) => {
-          // Verifica tanto o ID direto quanto o ID dentro do objeto obra
           if (reg.obraId === obraId || reg.obra?.id === obraId) {
             return {
               ...reg,
@@ -28,6 +27,34 @@ function ResumoObras({ registros, setRegistros }) {
       console.error("Erro ao atualizar status:", error);
       alert("Erro ao conectar com o servidor. Tente novamente.");
     }
+  };
+
+  // --- EXPORTAR PARA EXCEL (CSV) ---
+  const exportarParaCSV = () => {
+    if (!registros || registros.length === 0) return;
+
+    const cabecalho = "Data;Empresa;Obra;Colaborador;Tempo;Status\n";
+    const linhas = registros
+      .map((reg) => {
+        const data = new Date(reg.data).toLocaleDateString("pt-PT");
+        const empresa = reg.obra?.empresa?.nome || "N/A";
+        const obra = reg.obra?.nome || "N/A";
+        const colaborador = reg.colaborador || "Anónimo";
+        const tempo = reg.tempoFormatado || "0h 0m";
+        const status = reg.obra?.concluida ? "CONCLUIDA" : "EM ANDAMENTO";
+
+        return `${data};${empresa};${obra};${colaborador};${tempo};${status}`;
+      })
+      .join("\n");
+
+    const blob = new Blob(["\ufeff", cabecalho + linhas], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Relatorio_Obras.csv`;
+    link.click();
   };
 
   // --- LÓGICA DE AGRUPAMENTO ---
@@ -57,7 +84,20 @@ function ResumoObras({ registros, setRegistros }) {
 
   return (
     <div className="resumo-container">
-      <h2 style={{ marginBottom: "20px" }}>Resumo por Obra</h2>
+      {/* Botão de Download recolocado aqui */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "20px",
+        }}
+      >
+        <h2>Resumo por Obra</h2>
+        <button onClick={exportarParaCSV} className="btn-exportar">
+          📥 Baixar Excel
+        </button>
+      </div>
 
       {Object.values(resumo).map((group, index) => (
         <div
