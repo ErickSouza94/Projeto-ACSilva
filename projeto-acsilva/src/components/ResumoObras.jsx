@@ -1,65 +1,54 @@
+/* eslint-disable no-unused-vars */
 import React, { useState } from "react";
 import api from "./Services/api";
 
 function ResumoObras({ registros, setRegistros }) {
-  // Estados para os filtros
+  // Estados para os 3 filtros distintos
+  const [filtroEmpresa, setFiltroEmpresa] = useState("");
   const [filtroObra, setFiltroObra] = useState("");
   const [filtroColaborador, setFiltroColaborador] = useState("");
 
-  const alternarStatusObra = async (obraId, statusAtual) => {
-    if (!obraId) return;
+  const alternarStatusObra = async (id, status) => {
     try {
-      const novoStatus = !statusAtual;
-      await api.patch(`/empresas/obra/${obraId}/status`, {
-        concluida: novoStatus,
-      });
-
+      const novoStatus = !status;
+      await api.patch(`/empresas/obra/${id}/status`, { concluida: novoStatus });
       if (typeof setRegistros === "function") {
-        const novosRegistros = registros.map((reg) => {
-          if (reg.obraId === obraId || reg.obra?.id === obraId) {
-            return { ...reg, obra: { ...reg.obra, concluida: novoStatus } };
-          }
-          return reg;
-        });
-        setRegistros(novosRegistros);
+        setRegistros(
+          registros.map((r) =>
+            r.obraId === id || r.obra?.id === id
+              ? { ...r, obra: { ...r.obra, concluida: novoStatus } }
+              : r,
+          ),
+        );
       }
-    } catch (error) {
-      console.error("Erro ao atualizar status:", error);
-      alert("Erro ao conectar com o servidor.");
+    } catch (err) {
+      alert("Erro ao atualizar status.");
     }
   };
 
-  // --- LÓGICA DE FILTRAGEM E AGRUPAMENTO ---
   const processarDados = () => {
-    // 1. Primeiro filtramos os registros individuais
-    const registrosFiltrados = registros.filter((reg) => {
-      const nomeObra = (reg.obra?.nome || "").toLowerCase();
-      const nomeEmpresa = (reg.obra?.empresa?.nome || "").toLowerCase();
-      const nomeColaborador = (reg.colaborador || "").toLowerCase();
-
-      const termoObra = filtroObra.toLowerCase();
-      const termoColab = filtroColaborador.toLowerCase();
+    // Filtragem tripla
+    const filtrados = registros.filter((reg) => {
+      const empresa = (reg.obra?.empresa?.nome || "").toLowerCase();
+      const obra = (reg.obra?.nome || "").toLowerCase();
+      const colab = (reg.colaborador || "").toLowerCase();
 
       return (
-        (nomeObra.includes(termoObra) || nomeEmpresa.includes(termoObra)) &&
-        nomeColaborador.includes(termoColab)
+        empresa.includes(filtroEmpresa.toLowerCase()) &&
+        obra.includes(filtroObra.toLowerCase()) &&
+        colab.includes(filtroColaborador.toLowerCase())
       );
     });
 
-    // 2. Depois agrupamos os resultados que sobraram
-    return registrosFiltrados.reduce((acc, reg) => {
-      const obraId = reg.obra?.id || reg.obraId;
-      const obraNome = reg.obra?.nome || "Sem Nome";
-      const empresaNome = reg.obra?.empresa?.nome || "Sem Empresa";
-      const concluida = reg.obra?.concluida || false;
-      const chave = `${empresaNome} - ${obraNome}`;
-
+    // Agrupamento
+    return filtrados.reduce((acc, reg) => {
+      const chave = `${reg.obra?.empresa?.nome} - ${reg.obra?.nome}`;
       if (!acc[chave]) {
         acc[chave] = {
-          id: obraId,
-          empresa: empresaNome,
-          obra: obraNome,
-          concluida,
+          id: reg.obra?.id || reg.obraId,
+          empresa: reg.obra?.empresa?.nome,
+          obra: reg.obra?.nome,
+          concluida: reg.obra?.concluida,
           dados: [],
         };
       }
@@ -69,27 +58,6 @@ function ResumoObras({ registros, setRegistros }) {
   };
 
   const resumo = processarDados();
-
-  const exportarParaCSV = () => {
-    // Exporta apenas o que está filtrado na tela
-    const dadosParaExportar = Object.values(resumo).flatMap((g) => g.dados);
-    if (dadosParaExportar.length === 0) return;
-
-    const cabecalho = "Data;Empresa;Obra;Colaborador;Tempo;Status\n";
-    const linhas = dadosParaExportar
-      .map((reg) => {
-        return `${new Date(reg.data).toLocaleDateString("pt-PT")};${reg.obra?.empresa?.nome};${reg.obra?.nome};${reg.colaborador};${reg.tempoFormatado};${reg.obra?.concluida ? "CONCLUIDA" : "EM ANDAMENTO"}`;
-      })
-      .join("\n");
-
-    const blob = new Blob(["\ufeff", cabecalho + linhas], {
-      type: "text/csv;charset=utf-8;",
-    });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `Relatorio_Filtrado.csv`;
-    link.click();
-  };
 
   return (
     <div className="resumo-container">
@@ -102,75 +70,105 @@ function ResumoObras({ registros, setRegistros }) {
         }}
       >
         <h2>Resumo por Obra</h2>
-        <button onClick={exportarParaCSV} className="btn-exportar">
-          📥 Baixar Excel (Filtrado)
+        <button onClick={() => {}} className="btn-exportar">
+          📥 Exportar Vista Atual
         </button>
       </div>
 
-      {/* --- BARRA DE FILTROS --- */}
+      {/* --- BARRA DE 3 FILTROS --- */}
       <div
         style={{
-          display: "flex",
-          gap: "10px",
-          marginBottom: "20px",
-          backgroundColor: "#f1f1f1",
-          padding: "15px",
-          borderRadius: "8px",
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr 1fr",
+          gap: "15px",
+          marginBottom: "25px",
+          backgroundColor: "#f8f9fa",
+          padding: "20px",
+          borderRadius: "10px",
+          border: "1px solid #e0e0e0",
         }}
       >
-        <div style={{ flex: 1 }}>
+        <div>
           <label
             style={{
-              fontSize: "0.8rem",
+              fontSize: "0.75rem",
               fontWeight: "bold",
+              color: "#555",
               display: "block",
               marginBottom: "5px",
             }}
           >
-            Buscar Obra/Empresa:
+            EMPRESA
           </label>
           <input
             type="text"
-            placeholder="Ex: Manutenção..."
+            placeholder="Filtrar empresa..."
+            value={filtroEmpresa}
+            onChange={(e) => setFiltroEmpresa(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "10px",
+              borderRadius: "5px",
+              border: "1px solid #ccc",
+            }}
+          />
+        </div>
+        <div>
+          <label
+            style={{
+              fontSize: "0.75rem",
+              fontWeight: "bold",
+              color: "#555",
+              display: "block",
+              marginBottom: "5px",
+            }}
+          >
+            OBRA
+          </label>
+          <input
+            type="text"
+            placeholder="Filtrar obra..."
             value={filtroObra}
             onChange={(e) => setFiltroObra(e.target.value)}
             style={{
               width: "100%",
-              padding: "8px",
-              borderRadius: "4px",
+              padding: "10px",
+              borderRadius: "5px",
               border: "1px solid #ccc",
             }}
           />
         </div>
-        <div style={{ flex: 1 }}>
+        <div>
           <label
             style={{
-              fontSize: "0.8rem",
+              fontSize: "0.75rem",
               fontWeight: "bold",
+              color: "#555",
               display: "block",
               marginBottom: "5px",
             }}
           >
-            Filtrar Colaborador:
+            COLABORADOR
           </label>
           <input
             type="text"
-            placeholder="Ex: Erick..."
+            placeholder="Filtrar nome..."
             value={filtroColaborador}
             onChange={(e) => setFiltroColaborador(e.target.value)}
             style={{
               width: "100%",
-              padding: "8px",
-              borderRadius: "4px",
+              padding: "10px",
+              borderRadius: "5px",
               border: "1px solid #ccc",
             }}
           />
         </div>
       </div>
 
+      {/* Listagem de Cards */}
       {Object.values(resumo).length === 0 ? (
-        <p style={{ textAlign: "center", color: "#666" }}>
-          Nenhum registro encontrado para os filtros aplicados.
+        <p style={{ textAlign: "center", padding: "40px", color: "#999" }}>
+          Nenhum registo corresponde aos filtros.
         </p>
       ) : (
         Object.values(resumo).map((group, index) => (
@@ -181,16 +179,16 @@ function ResumoObras({ registros, setRegistros }) {
               borderLeft: group.concluida
                 ? "10px solid #27ae60"
                 : "10px solid #3498db",
-              backgroundColor: group.concluida ? "#f9fff9" : "#fff",
-              marginBottom: "15px",
+              marginBottom: "20px",
               borderRadius: "8px",
-              boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+              boxShadow: "0 4px 6px rgba(0,0,0,0.05)",
               overflow: "hidden",
+              backgroundColor: "white",
             }}
           >
             <div
               style={{
-                padding: "10px 15px",
+                padding: "12px 20px",
                 backgroundColor: group.concluida ? "#27ae60" : "#2c3e50",
                 color: "white",
                 display: "flex",
@@ -198,37 +196,38 @@ function ResumoObras({ registros, setRegistros }) {
                 alignItems: "center",
               }}
             >
-              <strong>
-                {group.empresa} | {group.obra} {group.concluida ? "✅" : "🏗️"}
-              </strong>
+              <span style={{ fontSize: "1.1rem" }}>
+                <strong>{group.empresa}</strong> | {group.obra}
+              </span>
+
               <div
                 style={{
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
-                  gap: "5px",
                 }}
               >
                 {group.concluida ? (
                   <>
-                    <span style={{ fontWeight: "bold", fontSize: "0.9rem" }}>
-                      Obra Concluída
+                    <span style={{ fontSize: "0.8rem", fontWeight: "bold" }}>
+                      CONCLUÍDA ✅
                     </span>
                     <button
                       onClick={() =>
                         alternarStatusObra(group.id, group.concluida)
                       }
                       style={{
-                        padding: "2px 8px",
+                        marginTop: "4px",
+                        padding: "2px 10px",
                         cursor: "pointer",
-                        backgroundColor: "rgba(255,255,255,0.2)",
+                        backgroundColor: "transparent",
                         color: "white",
                         border: "1px solid white",
                         borderRadius: "4px",
-                        fontSize: "0.7rem",
+                        fontSize: "0.65rem",
                       }}
                     >
-                      Reabrir Obra
+                      Reabrir
                     </button>
                   </>
                 ) : (
@@ -237,12 +236,12 @@ function ResumoObras({ registros, setRegistros }) {
                       alternarStatusObra(group.id, group.concluida)
                     }
                     style={{
-                      padding: "6px 12px",
+                      padding: "8px 15px",
                       cursor: "pointer",
                       backgroundColor: "#2ecc71",
                       color: "white",
                       border: "none",
-                      borderRadius: "4px",
+                      borderRadius: "5px",
                       fontWeight: "bold",
                     }}
                   >
@@ -251,30 +250,36 @@ function ResumoObras({ registros, setRegistros }) {
                 )}
               </div>
             </div>
-            <div style={{ padding: "15px" }}>
+
+            <div style={{ padding: "15px 20px" }}>
               {group.dados.map((d, i) => (
                 <div
                   key={i}
                   style={{
-                    fontSize: "0.9rem",
-                    borderBottom: "1px solid #eee",
-                    padding: "5px 0",
-                    color: "#333",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    padding: "8px 0",
+                    borderBottom: "1px solid #f0f0f0",
                   }}
                 >
-                  <strong>{d.colaborador}</strong>: {d.tempoFormatado} (
-                  {new Date(d.data).toLocaleDateString()})
+                  <span>
+                    <strong>{d.colaborador}</strong>
+                  </span>
+                  <span style={{ color: "#666" }}>
+                    {d.tempoFormatado}{" "}
+                    <small>({new Date(d.data).toLocaleDateString()})</small>
+                  </span>
                 </div>
               ))}
               <div
                 style={{
-                  marginTop: "10px",
+                  marginTop: "12px",
                   textAlign: "right",
+                  color: group.concluida ? "#27ae60" : "#3498db",
                   fontWeight: "bold",
-                  color: "#2c3e50",
                 }}
               >
-                Total Filtrado nesta Obra: {group.dados.length} registo(s)
+                Total de registos nesta vista: {group.dados.length}
               </div>
             </div>
           </div>
