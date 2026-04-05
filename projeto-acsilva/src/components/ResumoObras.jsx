@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import api from "./Services/api";
 
 function ResumoObras({ registros, setRegistros }) {
-  // Estados para os 3 filtros distintos
   const [filtroEmpresa, setFiltroEmpresa] = useState("");
   const [filtroObra, setFiltroObra] = useState("");
   const [filtroColaborador, setFiltroColaborador] = useState("");
@@ -26,38 +25,56 @@ function ResumoObras({ registros, setRegistros }) {
     }
   };
 
-  const processarDados = () => {
-    // Filtragem tripla
-    const filtrados = registros.filter((reg) => {
-      const empresa = (reg.obra?.empresa?.nome || "").toLowerCase();
-      const obra = (reg.obra?.nome || "").toLowerCase();
-      const colab = (reg.colaborador || "").toLowerCase();
+  // --- FILTRAGEM ---
+  const registrosFiltrados = registros.filter((reg) => {
+    const empresa = (reg.obra?.empresa?.nome || "").toLowerCase();
+    const obra = (reg.obra?.nome || "").toLowerCase();
+    const colab = (reg.colaborador || "").toLowerCase();
 
-      return (
-        empresa.includes(filtroEmpresa.toLowerCase()) &&
-        obra.includes(filtroObra.toLowerCase()) &&
-        colab.includes(filtroColaborador.toLowerCase())
-      );
+    return (
+      empresa.includes(filtroEmpresa.toLowerCase()) &&
+      obra.includes(filtroObra.toLowerCase()) &&
+      colab.includes(filtroColaborador.toLowerCase())
+    );
+  });
+
+  // --- AGRUPAMENTO PARA OS CARDS ---
+  const resumo = registrosFiltrados.reduce((acc, reg) => {
+    const chave = `${reg.obra?.empresa?.nome} - ${reg.obra?.nome}`;
+    if (!acc[chave]) {
+      acc[chave] = {
+        id: reg.obra?.id || reg.obraId,
+        empresa: reg.obra?.empresa?.nome,
+        obra: reg.obra?.nome,
+        concluida: reg.obra?.concluida,
+        dados: [],
+      };
+    }
+    acc[chave].dados.push(reg);
+    return acc;
+  }, {});
+
+  // --- EXPORTAÇÃO ---
+  const exportarParaCSV = () => {
+    if (registrosFiltrados.length === 0) return;
+
+    const cabecalho = "Data;Empresa;Obra;Colaborador;Tempo;Status\n";
+    const linhas = registrosFiltrados
+      .map((reg) => {
+        const data = new Date(reg.data).toLocaleDateString("pt-PT");
+        const status = reg.obra?.concluida ? "CONCLUIDA" : "EM ANDAMENTO";
+        return `${data};${reg.obra?.empresa?.nome};${reg.obra?.nome};${reg.colaborador};${reg.tempoFormatado};${status}`;
+      })
+      .join("\n");
+
+    const blob = new Blob(["\ufeff", cabecalho + linhas], {
+      type: "text/csv;charset=utf-8;",
     });
-
-    // Agrupamento
-    return filtrados.reduce((acc, reg) => {
-      const chave = `${reg.obra?.empresa?.nome} - ${reg.obra?.nome}`;
-      if (!acc[chave]) {
-        acc[chave] = {
-          id: reg.obra?.id || reg.obraId,
-          empresa: reg.obra?.empresa?.nome,
-          obra: reg.obra?.nome,
-          concluida: reg.obra?.concluida,
-          dados: [],
-        };
-      }
-      acc[chave].dados.push(reg);
-      return acc;
-    }, {});
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `Relatorio_Registos.csv`;
+    link.click();
   };
-
-  const resumo = processarDados();
 
   return (
     <div className="resumo-container">
@@ -70,12 +87,11 @@ function ResumoObras({ registros, setRegistros }) {
         }}
       >
         <h2>Resumo por Obra</h2>
-        <button onClick={() => {}} className="btn-exportar">
-          📥 Exportar Vista Atual
+        <button onClick={exportarParaCSV} className="btn-exportar">
+          📊 Exportar Registos
         </button>
       </div>
 
-      {/* --- BARRA DE 3 FILTROS --- */}
       <div
         style={{
           display: "grid",
@@ -165,7 +181,6 @@ function ResumoObras({ registros, setRegistros }) {
         </div>
       </div>
 
-      {/* Listagem de Cards */}
       {Object.values(resumo).length === 0 ? (
         <p style={{ textAlign: "center", padding: "40px", color: "#999" }}>
           Nenhum registo corresponde aos filtros.
