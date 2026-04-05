@@ -1,23 +1,28 @@
 import React from "react";
-import axios from "axios"; // Certifique-se de que o axios está instalado
+import axios from "axios";
 
 function ResumoObras({ registros, setRegistros }) {
   // --- FUNÇÃO PARA COMUNICAR COM O BACKEND ---
   const alternarStatusObra = async (obraId, statusAtual) => {
+    if (!obraId) {
+      alert("Erro: ID da obra não encontrado.");
+      return;
+    }
+
     try {
       const novoStatus = !statusAtual;
 
-      // AJUSTE: Use a URL do seu backend no Render
-      // Exemplo: https://seu-projeto.onrender.com/empresas/obra/${obraId}/status
+      // URL ATUALIZADA conforme seu painel do Render
       await axios.patch(
-        `https://backend-acsilva.onrender.com/empresas/obra/${obraId}/status`,
+        `https://acsilva-backend-render.onrender.com/empresas/obra/${obraId}/status`,
         {
           concluida: novoStatus,
         },
       );
 
-      // Atualiza o estado local para mudar a cor na tela sem dar F5
+      // Atualiza o estado local para mudar a cor na tela sem precisar de F5
       const novosRegistros = registros.map((reg) => {
+        // Verifica o ID tanto no objeto aninhado quanto na raiz do registro
         if (reg.obraId === obraId || reg.obra?.id === obraId) {
           return {
             ...reg,
@@ -26,11 +31,12 @@ function ResumoObras({ registros, setRegistros }) {
         }
         return reg;
       });
+
       setRegistros(novosRegistros);
     } catch (error) {
       console.error("Erro ao atualizar status:", error);
       alert(
-        "Erro ao atualizar o status da obra. Verifique se o backend está online.",
+        "Erro ao conectar com o servidor. Verifique se o backend está online no Render.",
       );
     }
   };
@@ -116,6 +122,7 @@ function ResumoObras({ registros, setRegistros }) {
             marginBottom: "15px",
             borderRadius: "8px",
             boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+            overflow: "hidden",
           }}
         >
           <div
@@ -126,8 +133,6 @@ function ResumoObras({ registros, setRegistros }) {
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              borderTopLeftRadius: "6px",
-              borderTopRightRadius: "6px",
             }}
           >
             <strong style={{ fontSize: "1.1rem" }}>
@@ -151,7 +156,6 @@ function ResumoObras({ registros, setRegistros }) {
           </div>
 
           <div style={{ padding: "15px" }}>
-            {/* Aqui entra a sua tabela ou lista de tempos por colaborador */}
             {group.dados.map((d, i) => (
               <div
                 key={i}
@@ -159,9 +163,10 @@ function ResumoObras({ registros, setRegistros }) {
                   fontSize: "0.9rem",
                   borderBottom: "1px solid #eee",
                   padding: "5px 0",
+                  color: group.concluida ? "#777" : "#333",
                 }}
               >
-                {d.colaborador}: {d.tempoFormatado} (
+                <strong>{d.colaborador}</strong>: {d.tempoFormatado} (
                 {new Date(d.data).toLocaleDateString()})
               </div>
             ))}
