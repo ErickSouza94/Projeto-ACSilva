@@ -58,12 +58,17 @@ function ResumoObras({ registros, setRegistros }) {
   const exportarParaCSV = () => {
     if (registrosFiltrados.length === 0) return;
 
-    const cabecalho = "Data;Empresa;Obra;Colaborador;Tempo;Status\n";
+    // Adicionado "Materiais" ao cabeçalho
+    const cabecalho = "Data;Empresa;Obra;Colaborador;Tempo;Materiais;Status\n";
     const linhas = registrosFiltrados
       .map((reg) => {
         const data = new Date(reg.data).toLocaleDateString("pt-PT");
         const status = reg.obra?.concluida ? "CONCLUIDA" : "EM ANDAMENTO";
-        return `${data};${reg.obra?.empresa?.nome};${reg.obra?.nome};${reg.colaborador};${reg.tempoFormatado};${status}`;
+        // Limpar possíveis quebras de linha no texto de materiais para não quebrar o CSV
+        const materiaisTexto = reg.materiais
+          ? reg.materiais.replace(/\n/g, " ")
+          : "";
+        return `${data};${reg.obra?.empresa?.nome};${reg.obra?.nome};${reg.colaborador};${reg.tempoFormatado};${materiaisTexto};${status}`;
       })
       .join("\n");
 
@@ -92,6 +97,7 @@ function ResumoObras({ registros, setRegistros }) {
         </button>
       </div>
 
+      {/* FILTROS */}
       <div
         style={{
           display: "grid",
@@ -201,6 +207,7 @@ function ResumoObras({ registros, setRegistros }) {
               backgroundColor: "white",
             }}
           >
+            {/* CABEÇALHO DO CARD */}
             <div
               style={{
                 padding: "12px 20px",
@@ -266,26 +273,52 @@ function ResumoObras({ registros, setRegistros }) {
               </div>
             </div>
 
+            {/* LISTA DE REGISTOS DENTRO DA OBRA */}
             <div style={{ padding: "15px 20px" }}>
               {group.dados.map((d, i) => (
                 <div
                   key={i}
                   style={{
                     display: "flex",
-                    justifyContent: "space-between",
-                    padding: "8px 0",
+                    flexDirection: "column", // Alterado para empilhar nome e materiais
+                    padding: "10px 0",
                     borderBottom: "1px solid #f0f0f0",
                   }}
                 >
-                  <span>
-                    <strong>{d.colaborador}</strong>
-                  </span>
-                  <span style={{ color: "#666" }}>
-                    {d.tempoFormatado}{" "}
-                    <small>({new Date(d.data).toLocaleDateString()})</small>
-                  </span>
+                  <div
+                    style={{ display: "flex", justifyContent: "space-between" }}
+                  >
+                    <span>
+                      <strong>{d.colaborador}</strong>
+                    </span>
+                    <span style={{ color: "#666" }}>
+                      {d.tempoFormatado}{" "}
+                      <small>({new Date(d.data).toLocaleDateString()})</small>
+                    </span>
+                  </div>
+
+                  {/* CAIXA DE MATERIAIS ADICIONADA AQUI */}
+                  {d.materiais && (
+                    <div
+                      style={{
+                        marginTop: "6px",
+                        padding: "8px 12px",
+                        backgroundColor: "#fff9c4", // Amarelo suave para destacar
+                        borderLeft: "4px solid #fbc02d",
+                        borderRadius: "4px",
+                        fontSize: "0.85rem",
+                        color: "#444",
+                        width: "fit-content",
+                        maxWidth: "90%",
+                        boxShadow: "1px 1px 3px rgba(0,0,0,0.1)",
+                      }}
+                    >
+                      <strong>📦 Materiais:</strong> {d.materiais}
+                    </div>
+                  )}
                 </div>
               ))}
+
               <div
                 style={{
                   marginTop: "12px",

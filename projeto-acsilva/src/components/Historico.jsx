@@ -29,6 +29,24 @@ function Historico({ registros, onExcluir }) {
                 <small>
                   {reg.colaborador?.toUpperCase()} • {formatarData(reg.data)}
                 </small>
+
+                {/* ADICIONADO: Exibição de materiais no histórico */}
+                {reg.materiais && (
+                  <div
+                    style={{
+                      marginTop: "8px",
+                      padding: "4px 8px",
+                      backgroundColor: "#fff9c4",
+                      borderLeft: "3px solid #fbc02d",
+                      borderRadius: "3px",
+                      fontSize: "0.75rem",
+                      color: "#555",
+                      fontStyle: "italic",
+                    }}
+                  >
+                    <strong>Materiais:</strong> {reg.materiais}
+                  </div>
+                )}
               </div>
 
               <div className="card-acoes">
