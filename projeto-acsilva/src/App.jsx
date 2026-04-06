@@ -275,7 +275,7 @@ function App() {
             </div>
 
             <div className="campo">
-              <label>Materiais Utilizados (Opcional):</label>
+              <label>Materiais Utilizados:</label>
               <textarea
                 value={materiais}
                 onChange={(e) => setMateriais(e.target.value)}
