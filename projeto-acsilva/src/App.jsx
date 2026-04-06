@@ -9,7 +9,9 @@ import PainelAdmin from "./components/PainelAdmin";
 
 function App() {
   const [isAdminAutenticado, setIsAdminAutenticado] = useState(false);
-  const [carregando, setCarregando] = useState(false);
+  const [carregando, setCarregando] = useState(false); // Carregamento do Admin
+  const [enviando, setEnviando] = useState(false); // Carregamento do Registo de Horas
+
   const getHoje = () => new Date().toISOString().split("T")[0];
 
   const [empresas, setEmpresas] = useState([]);
@@ -22,7 +24,7 @@ function App() {
   const [dataTrabalho, setDataTrabalho] = useState(getHoje());
   const [horasInput, setHorasInput] = useState("");
   const [minutosInput, setMinutosInput] = useState("");
-  const [materiais, setMateriais] = useState(""); // <--- NOVO ESTADO
+  const [materiais, setMateriais] = useState("");
 
   const [obrasFiltradas, setObrasFiltradas] = useState([]);
   const [abaAtiva, setAbaAtiva] = useState("registro");
@@ -106,26 +108,34 @@ function App() {
       return;
     }
 
+    // ATIVA ESTADO DE CARREGAMENTO
+    setEnviando(true);
+
     const novoRegistro = {
       colaborador: nome,
       data: new Date(dataTrabalho).toISOString(),
       horas: h + m / 60,
       tempoFormatado: `${h}h ${m}m`,
       obraId: obraId,
-      materiais: materiais, // <--- ENVIO DOS MATERIAIS
+      materiais: materiais,
     };
 
     try {
       const res = await api.post("/registros", novoRegistro);
       setHistorico([res.data, ...historico]);
       alert("Registo salvo com sucesso!");
+
       // Limpeza dos campos
       setObraId("");
       setHorasInput("");
       setMinutosInput("");
-      setMateriais(""); // <--- LIMPA APÓS ENVIAR
+      setMateriais("");
     } catch (err) {
+      console.error(err);
       alert("Erro ao salvar registro.");
+    } finally {
+      // DESATIVA O CARREGAMENTO (Sempre executa, dando erro ou não)
+      setEnviando(false);
     }
   };
 
@@ -264,7 +274,6 @@ function App() {
               </div>
             </div>
 
-            {/* --- NOVO CAMPO DE MATERIAIS --- */}
             <div className="campo">
               <label>Materiais Utilizados (Opcional):</label>
               <textarea
@@ -284,8 +293,27 @@ function App() {
               />
             </div>
 
-            <button type="submit" className="btn-enviar">
-              Registar
+            {/* BOTÃO ATUALIZADO COM CARREGAMENTO */}
+            <button
+              type="submit"
+              className="btn-enviar"
+              disabled={enviando}
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: "10px",
+                opacity: enviando ? 0.7 : 1,
+                cursor: enviando ? "not-allowed" : "pointer",
+              }}
+            >
+              {enviando ? (
+                <>
+                  <span className="spinner"></span>A registar...
+                </>
+              ) : (
+                "Registar"
+              )}
             </button>
           </form>
           <Historico registros={historico} onExcluir={handleExcluir} />
