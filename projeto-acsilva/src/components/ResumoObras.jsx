@@ -58,13 +58,11 @@ function ResumoObras({ registros, setRegistros }) {
   const exportarParaCSV = () => {
     if (registrosFiltrados.length === 0) return;
 
-    // Adicionado "Materiais" ao cabeçalho
     const cabecalho = "Data;Empresa;Obra;Colaborador;Tempo;Materiais;Status\n";
     const linhas = registrosFiltrados
       .map((reg) => {
         const data = new Date(reg.data).toLocaleDateString("pt-PT");
         const status = reg.obra?.concluida ? "CONCLUIDA" : "EM ANDAMENTO";
-        // Limpar possíveis quebras de linha no texto de materiais para não quebrar o CSV
         const materiaisTexto = reg.materiais
           ? reg.materiais.replace(/\n/g, " ")
           : "";
@@ -110,81 +108,43 @@ function ResumoObras({ registros, setRegistros }) {
           border: "1px solid #e0e0e0",
         }}
       >
-        <div>
-          <label
-            style={{
-              fontSize: "0.75rem",
-              fontWeight: "bold",
-              color: "#555",
-              display: "block",
-              marginBottom: "5px",
-            }}
-          >
-            EMPRESA
-          </label>
-          <input
-            type="text"
-            placeholder="Filtrar empresa..."
-            value={filtroEmpresa}
-            onChange={(e) => setFiltroEmpresa(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "10px",
-              borderRadius: "5px",
-              border: "1px solid #ccc",
-            }}
-          />
-        </div>
-        <div>
-          <label
-            style={{
-              fontSize: "0.75rem",
-              fontWeight: "bold",
-              color: "#555",
-              display: "block",
-              marginBottom: "5px",
-            }}
-          >
-            OBRA
-          </label>
-          <input
-            type="text"
-            placeholder="Filtrar obra..."
-            value={filtroObra}
-            onChange={(e) => setFiltroObra(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "10px",
-              borderRadius: "5px",
-              border: "1px solid #ccc",
-            }}
-          />
-        </div>
-        <div>
-          <label
-            style={{
-              fontSize: "0.75rem",
-              fontWeight: "bold",
-              color: "#555",
-              display: "block",
-              marginBottom: "5px",
-            }}
-          >
-            COLABORADOR
-          </label>
-          <input
-            type="text"
-            placeholder="Filtrar nome..."
-            value={filtroColaborador}
-            onChange={(e) => setFiltroColaborador(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "10px",
-              borderRadius: "5px",
-              border: "1px solid #ccc",
-            }}
-          />
-        </div>
+        {["EMPRESA", "OBRA", "COLABORADOR"].map((label, idx) => (
+          <div key={label}>
+            <label
+              style={{
+                fontSize: "0.75rem",
+                fontWeight: "bold",
+                color: "#555",
+                display: "block",
+                marginBottom: "5px",
+              }}
+            >
+              {label}
+            </label>
+            <input
+              type="text"
+              placeholder={`Filtrar ${label.toLowerCase()}...`}
+              value={
+                idx === 0
+                  ? filtroEmpresa
+                  : idx === 1
+                    ? filtroObra
+                    : filtroColaborador
+              }
+              onChange={(e) =>
+                [setFiltroEmpresa, setFiltroObra, setFiltroColaborador][idx](
+                  e.target.value,
+                )
+              }
+              style={{
+                width: "100%",
+                padding: "10px",
+                borderRadius: "5px",
+                border: "1px solid #ccc",
+              }}
+            />
+          </div>
+        ))}
       </div>
 
       {Object.values(resumo).length === 0 ? (
@@ -221,7 +181,6 @@ function ResumoObras({ registros, setRegistros }) {
               <span style={{ fontSize: "1.1rem" }}>
                 <strong>{group.empresa}</strong> | {group.obra}
               </span>
-
               <div
                 style={{
                   display: "flex",
@@ -273,14 +232,14 @@ function ResumoObras({ registros, setRegistros }) {
               </div>
             </div>
 
-            {/* LISTA DE REGISTOS DENTRO DA OBRA */}
+            {/* LISTA DE REGISTOS */}
             <div style={{ padding: "15px 20px" }}>
               {group.dados.map((d, i) => (
                 <div
                   key={i}
                   style={{
                     display: "flex",
-                    flexDirection: "column", // Alterado para empilhar nome e materiais
+                    flexDirection: "column",
                     padding: "10px 0",
                     borderBottom: "1px solid #f0f0f0",
                   }}
@@ -293,23 +252,25 @@ function ResumoObras({ registros, setRegistros }) {
                     </span>
                     <span style={{ color: "#666" }}>
                       {d.tempoFormatado}{" "}
-                      <small>({new Date(d.data).toLocaleDateString()})</small>
+                      <small>
+                        ({new Date(d.data).toLocaleDateString("pt-PT")})
+                      </small>
                     </span>
                   </div>
 
-                  {/* CAIXA DE MATERIAIS ADICIONADA AQUI */}
-                  {d.materiais && (
+                  {/* CAIXA DE MATERIAIS - Verificação de existência e conteúdo */}
+                  {d.materiais && d.materiais.trim() !== "" && (
                     <div
                       style={{
-                        marginTop: "6px",
+                        marginTop: "8px",
                         padding: "8px 12px",
-                        backgroundColor: "#fff9c4", // Amarelo suave para destacar
+                        backgroundColor: "#fff9c4",
                         borderLeft: "4px solid #fbc02d",
                         borderRadius: "4px",
                         fontSize: "0.85rem",
                         color: "#444",
                         width: "fit-content",
-                        maxWidth: "90%",
+                        maxWidth: "95%",
                         boxShadow: "1px 1px 3px rgba(0,0,0,0.1)",
                       }}
                     >

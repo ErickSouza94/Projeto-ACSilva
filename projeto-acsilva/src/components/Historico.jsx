@@ -30,21 +30,24 @@ function Historico({ registros, onExcluir }) {
                   {reg.colaborador?.toUpperCase()} • {formatarData(reg.data)}
                 </small>
 
-                {/* ADICIONADO: Exibição de materiais no histórico */}
-                {reg.materiais && (
+                {/* EXIBIÇÃO DE MATERIAIS NO HISTÓRICO */}
+                {/* Verifica se existem materiais e se não é apenas uma string vazia */}
+                {reg.materiais && reg.materiais.trim() !== "" && (
                   <div
                     style={{
                       marginTop: "8px",
-                      padding: "4px 8px",
-                      backgroundColor: "#fff9c4",
+                      padding: "6px 10px",
+                      backgroundColor: "#fff9c4", // Amarelo consistente com o Resumo
                       borderLeft: "3px solid #fbc02d",
-                      borderRadius: "3px",
+                      borderRadius: "4px",
                       fontSize: "0.75rem",
-                      color: "#555",
-                      fontStyle: "italic",
+                      color: "#444",
+                      fontStyle: "normal", // Removido itálico para melhor leitura em caixas pequenas
+                      lineHeight: "1.2",
+                      wordBreak: "break-word",
                     }}
                   >
-                    <strong>Materiais:</strong> {reg.materiais}
+                    <strong>📦 Materiais:</strong> {reg.materiais}
                   </div>
                 )}
               </div>
