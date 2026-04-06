@@ -15,7 +15,7 @@ model Empresa {
 }
 
 model Responsavel {
-  id        Int     @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   nome      String
   empresaId String
   obras     Obra[]
@@ -34,11 +34,12 @@ model Obra {
 }
 
 model Registo {
-  id             String   @id @default(uuid())
-  colaborador    String
-  data           DateTime
-  horas          Decimal
-  tempoFormatado String
-  obraId         String
-  obra           Obra     @relation(fields: [obraId], references: [id])
+  id              String   @id @default(uuid())
+  colaborador     String
+  data            DateTime
+  horas           Decimal
+  tempoFormatado  String
+  materiais       String?  // <-- ADICIONADO: Campo opcional para descrição de materiais
+  obraId          String
+  obra            Obra     @relation(fields: [obraId], references: [id])
 }

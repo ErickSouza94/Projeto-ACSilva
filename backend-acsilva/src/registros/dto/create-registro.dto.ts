@@ -1,5 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
-import { IsString, IsNotEmpty, IsNumber, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsNumber,
+  IsDateString,
+  IsOptional,
+} from 'class-validator';
 
 export class CreateRegistroDto {
   @IsString()
@@ -18,4 +24,8 @@ export class CreateRegistroDto {
   @IsString()
   @IsNotEmpty()
   obraId: string;
+
+  @IsString()
+  @IsOptional()
+  materiais?: string;
 }

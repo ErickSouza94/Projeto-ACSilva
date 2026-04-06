@@ -22,6 +22,7 @@ function App() {
   const [dataTrabalho, setDataTrabalho] = useState(getHoje());
   const [horasInput, setHorasInput] = useState("");
   const [minutosInput, setMinutosInput] = useState("");
+  const [materiais, setMateriais] = useState(""); // <--- NOVO ESTADO
 
   const [obrasFiltradas, setObrasFiltradas] = useState([]);
   const [abaAtiva, setAbaAtiva] = useState("registro");
@@ -111,15 +112,18 @@ function App() {
       horas: h + m / 60,
       tempoFormatado: `${h}h ${m}m`,
       obraId: obraId,
+      materiais: materiais, // <--- ENVIO DOS MATERIAIS
     };
 
     try {
       const res = await api.post("/registros", novoRegistro);
       setHistorico([res.data, ...historico]);
       alert("Registo salvo com sucesso!");
+      // Limpeza dos campos
       setObraId("");
       setHorasInput("");
       setMinutosInput("");
+      setMateriais(""); // <--- LIMPA APÓS ENVIAR
     } catch (err) {
       alert("Erro ao salvar registro.");
     }
@@ -209,7 +213,6 @@ function App() {
               </select>
             </div>
 
-            {/* --- BLOCO DO RESPONSÁVEL ADICIONADO AQUI --- */}
             {obraId && (
               <div
                 className="campo"
@@ -242,6 +245,7 @@ function App() {
                 required
               />
             </div>
+
             <div className="campo">
               <label>Tempo:</label>
               <div style={{ display: "flex", gap: "10px" }}>
@@ -259,6 +263,27 @@ function App() {
                 />
               </div>
             </div>
+
+            {/* --- NOVO CAMPO DE MATERIAIS --- */}
+            <div className="campo">
+              <label>Materiais Utilizados (Opcional):</label>
+              <textarea
+                value={materiais}
+                onChange={(e) => setMateriais(e.target.value)}
+                placeholder="Descreva materiais e quantidades..."
+                rows="3"
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                  borderRadius: "8px",
+                  border: "1px solid #ddd",
+                  fontSize: "14px",
+                  fontFamily: "inherit",
+                  resize: "vertical",
+                }}
+              />
+            </div>
+
             <button type="submit" className="btn-enviar">
               Registar
             </button>

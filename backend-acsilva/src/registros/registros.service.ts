@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { prisma } from '../../lib/prisma'; // Importação direta que você está usando
+import { prisma } from '../../lib/prisma';
 import { CreateRegistroDto } from './dto/create-registro.dto';
 
 @Injectable()
@@ -13,6 +13,7 @@ export class RegistrosService {
           horas: Number(data.horas),
           tempoFormatado: data.tempoFormatado,
           obraId: data.obraId,
+          materiais: data.materiais, // <-- LINHA ADICIONADA
         },
         include: {
           obra: {
@@ -28,7 +29,6 @@ export class RegistrosService {
     }
   }
 
-  // CORRIGIDO: Removido o 'this.' e ajustado para 'registo'
   async remove(id: string) {
     try {
       return await prisma.registo.delete({
